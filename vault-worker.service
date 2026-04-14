@@ -1,0 +1,14 @@
+[Unit]
+Description=The Vault Video Transcoding Worker
+After=network.target redis.service vault.service
+
+[Service]
+Type=simple
+User=vault-user
+WorkingDirectory=/opt/thevault
+ExecStart=/usr/bin/npm run worker
+Restart=on-failure
+Environment=NODE_ENV=production JWT_SECRET=change-this-secret DATABASE_URL=file:./dev.db
+
+[Install]
+WantedBy=multi-user.target

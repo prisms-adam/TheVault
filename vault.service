@@ -1,0 +1,14 @@
+[Unit]
+Description=The Vault Studio Console Backend
+After=network.target redis.service
+
+[Service]
+Type=simple
+User=vault-user
+WorkingDirectory=/opt/thevault
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+Environment=NODE_ENV=production PORT=3000 JWT_SECRET=change-this-secret DATABASE_URL=file:./dev.db
+
+[Install]
+WantedBy=multi-user.target
