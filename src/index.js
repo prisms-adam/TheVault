@@ -53,6 +53,6 @@ app.get('/', (req, res) => {
   res.json({ message: 'The Vault API is running' });
 });
 
-app.listen(PORT, () => {
-  console.log(`The Vault Studio Console running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`The Vault Studio Console running on http://0.0.0.0:${PORT}`);
 });

@@ -69,6 +69,41 @@ const Admin = () => {
     fetchData();
   };
 
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [userEditData, setUserEditData] = useState({ username: '' });
+  const [resetPasswordUser, setResetPasswordUser] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+
+  const startEditingUser = (user: any) => {
+    setEditingUser(user.id);
+    setUserEditData({ username: user.username });
+  };
+
+  const saveUserEdit = async (id: string) => {
+    await api.patch(`/admin/users/${id}`, userEditData);
+    setEditingUser(null);
+    fetchData();
+  };
+
+  const resetPassword = async (id: string) => {
+    if (!newPassword) return;
+    await api.patch(`/admin/users/${id}/password`, { password: newPassword });
+    setResetPasswordUser(null);
+    setNewPassword('');
+    alert("Password updated successfully.");
+  };
+
+  const deleteUser = async (id: string) => {
+    if (window.confirm("CRITICAL: Delete this user and all their data permanently?")) {
+      try {
+        await api.delete(`/admin/users/${id}`);
+        fetchData();
+      } catch (err: any) {
+        alert(err.response?.data?.error || "Failed to delete user");
+      }
+    }
+  };
+
   const toggleAdmin = async (id: string, isAdmin: boolean) => {
     await api.patch(`/admin/users/${id}`, { isAdmin });
     fetchData();
@@ -243,20 +278,58 @@ const Admin = () => {
               <tr className="bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500">
                 <th className="p-6">Student Identity</th>
                 <th className="p-6">Enrolled</th>
-                <th className="p-6 text-right">Permissions</th>
+                <th className="p-6">Security</th>
+                <th className="p-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {users.map(u => (
                 <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="p-6 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400"><UserIcon size={16} /></div>
-                    <span className="font-bold">{u.username}</span>
+                  <td className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0"><UserIcon size={16} /></div>
+                      {editingUser === u.id ? (
+                        <div className="flex gap-2">
+                          <input 
+                            value={userEditData.username}
+                            onChange={(e) => setUserEditData({ username: e.target.value })}
+                            className="bg-onyx border border-record/30 rounded px-2 py-1 text-xs outline-none"
+                          />
+                          <button onClick={() => saveUserEdit(u.id)} className="text-[10px] text-green-500 font-black">Save</button>
+                          <button onClick={() => setEditingUser(null)} className="text-[10px] text-slate-500 font-black">Cancel</button>
+                        </div>
+                      ) : (
+                        <span className="font-bold">{u.username}</span>
+                      )}
+                    </div>
                   </td>
                   <td className="p-6 text-xs text-slate-500">{new Date(u.createdAt).toLocaleDateString()}</td>
-                  <td className="p-6 text-right">
+                  <td className="p-6">
+                    {resetPasswordUser === u.id ? (
+                      <div className="flex gap-2">
+                        <input 
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="New Pwd"
+                          className="bg-onyx border border-record/30 rounded px-2 py-1 text-[10px] w-24 outline-none"
+                        />
+                        <button onClick={() => resetPassword(u.id)} className="text-[10px] text-record font-black uppercase">Apply</button>
+                        <button onClick={() => setResetPasswordUser(null)} className="text-[10px] text-slate-500 font-black uppercase">X</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setResetPasswordUser(u.id)} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors">Reset Key</button>
+                    )}
+                  </td>
+                  <td className="p-6 text-right space-x-4">
                     <button onClick={() => toggleAdmin(u.id, !u.isAdmin)} className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${u.isAdmin ? 'bg-record text-white' : 'glass text-slate-400 hover:text-white'}`}>
                       {u.isAdmin ? 'Admin' : 'Student'}
+                    </button>
+                    <button onClick={() => startEditingUser(u)} className="text-slate-500 hover:text-white transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                    </button>
+                    <button onClick={() => deleteUser(u.id)} className="text-slate-500 hover:text-record transition-colors">
+                      <Trash2 size={14} />
                     </button>
                   </td>
                 </tr>

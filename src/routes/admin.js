@@ -85,15 +85,57 @@ router.get('/users', async (req, res) => {
   }
 });
 
-// PATCH /api/admin/users/:id - Toggle Admin
+const bcrypt = require('bcryptjs');
+
+// PATCH /api/admin/users/:id - Update user (isAdmin, username)
 router.patch('/users/:id', async (req, res) => {
-  const { isAdmin } = req.body;
+  const { isAdmin, username } = req.body;
   try {
     const user = await prisma.user.update({
       where: { id: req.params.id },
-      data: { isAdmin }
+      data: { isAdmin, username }
     });
     res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/admin/users/:id/password - Reset password
+router.patch('/users/:id/password', async (req, res) => {
+  const { password } = req.body;
+  if (!password || password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: { password: hashedPassword }
+    });
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/users/:id - Permanent deletion
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    // Prevent self-deletion
+    if (user.id === req.user.id) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+
+    // Delete associated data
+    await prisma.reaction.deleteMany({ where: { userId: user.id } });
+    await prisma.comment.deleteMany({ where: { userId: user.id } });
+    await prisma.user.delete({ where: { id: req.params.id } });
+
+    res.json({ message: 'User purged successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }

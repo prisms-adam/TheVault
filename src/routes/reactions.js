@@ -9,8 +9,8 @@ router.post('/:videoId', authenticate, async (req, res) => {
   const { videoId } = req.params;
   const userId = req.user.id;
 
-  if (!['👏', '🔥', '🎥', '💯'].includes(emoji)) {
-    return res.status(400).json({ error: 'Invalid emoji' });
+  if (!emoji) {
+    return res.status(400).json({ error: 'Emoji is required' });
   }
 
   try {
