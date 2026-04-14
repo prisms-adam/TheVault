@@ -34,9 +34,22 @@ router.post('/register', async (req, res) => {
       },
     });
 
+    const token = jwt.sign(
+      { userId: user.id, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     res.status(201).json({ 
       message: 'User created', 
-      user: { id: user.id, username: user.username, isAdmin: user.isAdmin } 
+      user: { id: user.id, username: user.username, isAdmin: user.isAdmin },
+      token
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
