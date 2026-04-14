@@ -27,7 +27,7 @@ const Navbar = () => {
     <nav className="glass sticky top-0 z-50 px-6 py-4 flex items-center justify-between border-b border-white/5">
       <Link to="/" className="flex items-center gap-3 text-2xl font-black tracking-tighter uppercase italic group">
         <div className="w-4 h-4 rounded-full bg-record animate-pulse shadow-[0_0_15px_rgba(190,18,60,0.8)]" />
-        <span className="group-hover:text-record transition-colors">The Vault</span>
+        <span className="group-hover:text-record transition-colors">THE AVC VAULT</span>
       </Link>
       
       <div className="flex items-center gap-8 text-[10px] font-black uppercase tracking-widest">
