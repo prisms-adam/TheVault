@@ -58,7 +58,6 @@ const VideoView = () => {
 
   if (!video) return <div className="animate-pulse flex items-center justify-center h-[50vh] text-record font-black tracking-widest uppercase">Initializing...</div>;
 
-  // Group reactions: { emoji: { count: number, me: boolean } }
   const reactionGroups = video.reactions.reduce((acc: any, r: any) => {
     if (!acc[r.emoji]) acc[r.emoji] = { count: 0, me: false };
     acc[r.emoji].count += 1;
@@ -66,14 +65,14 @@ const VideoView = () => {
     return acc;
   }, {});
 
-  // Sort comments: pinned first
-  const sortedComments = [...video.comments].sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
+  // Sort comments: newest first
+  const sortedComments = [...video.comments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const assetBase = `${window.location.protocol}//${window.location.hostname}:3000`;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
-      <div className="w-full lg:w-4/5">
+    <div className="flex flex-col gap-8 max-w-5xl mx-auto">
+      <div className="w-full">
         <VideoPlayer 
           src={`${assetBase}${video.hlsPath}`} 
           poster={`${assetBase}${video.thumbnailPath}`} 
@@ -83,15 +82,15 @@ const VideoView = () => {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <div className="relative">
             <button 
-              onClick={() => setShowPicker(!showPicker)}
+              onClick={() => user ? setShowPicker(!showPicker) : alert('Please login to react')}
               className="p-2 glass rounded-full hover:bg-white/10 transition-all text-slate-400 hover:text-white flex items-center gap-1 group"
             >
               <Smile size={20} className="group-hover:scale-110 transition-transform" />
               <Plus size={12} />
             </button>
             
-            {showPicker && (
-              <div className="absolute bottom-full left-0 mb-4 z-50">
+            {showPicker && user && (
+              <div className="absolute top-full left-0 mt-2 z-50">
                 <div className="fixed inset-0" onClick={() => setShowPicker(false)} />
                 <div className="relative shadow-2xl border border-white/10 rounded-2xl overflow-hidden">
                   <EmojiPicker 
@@ -107,7 +106,7 @@ const VideoView = () => {
           {Object.entries(reactionGroups).map(([emoji, data]: [string, any]) => (
             <button
               key={emoji}
-              onClick={() => addReaction(emoji)}
+              onClick={() => user ? addReaction(emoji) : alert('Please login to react')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
                 data.me 
                   ? 'bg-record/20 border-record/40 text-record shadow-[0_0_10px_rgba(190,18,60,0.2)]' 
@@ -126,46 +125,45 @@ const VideoView = () => {
         </div>
       </div>
 
-      <div className="w-full lg:w-1/5 space-y-6">
-        {/* Comments Feed */}
-        <div className="glass rounded-2xl p-6 flex flex-col h-[600px]">
-          <h3 className="font-black text-[10px] uppercase tracking-widest text-slate-500 mb-6 flex items-center gap-2">
-            <MessageSquare size={12} /> Feed Analysis
-          </h3>
-          
-          <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-            {sortedComments.map((c: any) => (
-              <div key={c.id} className={`p-3 rounded-xl border ${c.isPinned ? 'bg-record/10 border-record/30' : 'bg-white/5 border-white/5'}`}>
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    {c.user.username} {c.isPinned && <Pin size={10} className="inline ml-1 text-record" />}
-                  </span>
-                  <div className="flex gap-1">
-                    {user?.isAdmin && (
-                      <>
-                        <button onClick={() => pinComment(c.id)} className="text-slate-600 hover:text-record"><Pin size={10} /></button>
-                        <button onClick={() => deleteComment(c.id)} className="text-slate-600 hover:text-record"><Trash2 size={10} /></button>
-                      </>
-                    )}
-                  </div>
+      {/* Comments Feed */}
+      <div className="glass rounded-2xl p-6 flex flex-col">
+        <h3 className="font-black text-[10px] uppercase tracking-widest text-slate-500 mb-6 flex items-center gap-2">
+          <MessageSquare size={12} /> COMMENTS
+        </h3>
+        
+        <div className="space-y-4 mb-6">
+          {sortedComments.map((c: any) => (
+            <div key={c.id} className={`p-4 rounded-xl border ${c.isPinned ? 'bg-record/10 border-record/30' : 'bg-white/5 border-white/5'}`}>
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  {c.user.username} {c.isPinned && <Pin size={10} className="inline ml-1 text-record" />}
+                </span>
+                <div className="flex gap-2">
+                  {user?.isAdmin && (
+                    <>
+                      <button onClick={() => pinComment(c.id)} className="text-slate-600 hover:text-record"><Pin size={12} /></button>
+                      <button onClick={() => deleteComment(c.id)} className="text-slate-600 hover:text-record"><Trash2 size={12} /></button>
+                    </>
+                  )}
                 </div>
-                <p className="text-xs text-slate-200">{c.text}</p>
               </div>
-            ))}
-          </div>
-
-          <form onSubmit={addComment} className="mt-6 relative">
-            <input 
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Log feedback..."
-              className="w-full bg-onyx/50 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-record transition-all pr-10"
-            />
-            <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 text-record hover:text-white transition-colors">
-              <Send size={16} />
-            </button>
-          </form>
+              <p className="text-sm text-slate-200">{c.text}</p>
+            </div>
+          ))}
         </div>
+
+        <form onSubmit={addComment} className="relative">
+          <input 
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            disabled={!user}
+            placeholder={user ? "Submit comment..." : "Login to comment..."}
+            className="w-full bg-onyx/50 border border-white/10 rounded-xl px-4 py-4 text-sm outline-none focus:border-record transition-all pr-12 disabled:opacity-50"
+          />
+          <button type="submit" disabled={!user} className="absolute right-3 top-1/2 -translate-y-1/2 text-record hover:text-white transition-colors disabled:opacity-50">
+            <Send size={18} />
+          </button>
+        </form>
       </div>
     </div>
   );

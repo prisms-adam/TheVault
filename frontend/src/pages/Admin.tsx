@@ -134,7 +134,7 @@ const Admin = () => {
     <div className="max-w-6xl mx-auto space-y-12">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-5xl font-black uppercase tracking-tighter mb-2 italic">Sponsor Console</h1>
+          <h1 className="text-5xl font-black uppercase tracking-tighter mb-2 italic">ADMIN CONSOLE</h1>
           <p className="text-slate-500 uppercase text-[10px] font-black tracking-[0.3em] ml-1">Master Control & Video Ingestion</p>
         </div>
         <div className="flex gap-2 glass p-1 rounded-xl">
