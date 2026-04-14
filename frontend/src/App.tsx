@@ -61,9 +61,9 @@ const Navbar = () => {
 const App = () => {
   return (
     <BrowserRouter>
-      <div className="min-h-screen selection:bg-record selection:text-white">
+      <div className="min-h-screen selection:bg-record selection:text-white flex flex-col">
         <Navbar />
-        <main className="container mx-auto px-6 py-10">
+        <main className="container mx-auto px-6 py-10 flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/video/:id" element={<VideoView />} />
@@ -71,6 +71,9 @@ const App = () => {
             <Route path="/login" element={<Login />} />
           </Routes>
         </main>
+        <footer className="py-8 text-center text-[10px] font-black uppercase tracking-widest text-slate-600">
+          Made with love by the PRISMS Audio/Video Club, 2026
+        </footer>
       </div>
     </BrowserRouter>
   );
