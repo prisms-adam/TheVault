@@ -8,9 +8,11 @@ const api = axios.create({
 // Request interceptor to add token to headers
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) {
+  // Skip adding token for auth endpoints
+  if (token && !config.url?.includes('/auth/')) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  config.headers['Content-Type'] = 'application/json';
   return config;
 });
 

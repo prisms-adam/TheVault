@@ -22,15 +22,22 @@ const Login = () => {
       const res = await api.post(endpoint, { username, password });
       
       if (res.data.token) {
-        // Successful login/register
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
         navigate(res.data.user.isAdmin ? '/admin' : '/');
-        window.location.reload(); // Refresh to update navbar state
+        window.location.reload();
       }
     } catch (err: any) {
       setStatus('error');
-      setError(err.response?.data?.error || 'Authentication failed');
+      
+      // Handle Zod validation errors (e.g., password length)
+      const errorData = err.response?.data?.error;
+      if (Array.isArray(errorData)) {
+        const passwordError = errorData.find((e: any) => e.path.includes('password'));
+        setError(passwordError ? "Password must be at least 6 characters" : "Invalid input data");
+      } else {
+        setError(errorData || 'Authentication failed');
+      }
     }
   };
 
