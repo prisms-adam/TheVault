@@ -1,51 +1,57 @@
-# 📽️ The Vault: High School A/V Studio Console
+# The Vault: High School A/V Studio Console
 
-**The Vault** is a high-performance, LAN-exclusive video repository designed to look and feel like a **Professional Studio Console**. It prioritizes technical metadata, high-bitrate playback, and granular administrative control for educational A/V environments.
+The Vault is a high-performance, LAN-exclusive video repository designed to look and feel like a Professional Studio Console. It prioritizes technical metadata, high-bitrate playback, and granular administrative control for educational A/V environments.
 
 ---
 
-## 🚀 Core Features
+## Core Features
 
-### 📺 Studio Console Frontend
+### Studio Console Frontend
 - **Deep Onyx Theme:** A modern, distraction-free aesthetic with Record Red (#BE123C) accents.
-- **Theater Mode:** High-quality HLS playback with technical badges (e.g., `1080p`, `HLS`).
+- **Theater Mode:** High-quality HLS playback with technical badges (e.g., 1080p, HLS).
 - **Adaptive Bitrate:** Automatic fallback from 1080p to 720p to ensure smooth streaming.
-- **Engagement Console:** Emoji-only reactions (👏, 🔥, 🎥, 💯) and a feedback feed.
+- **Engagement Console:** Emoji reactions and a comment feed.
 
-### ⚙️ The "Engine" (Backend)
+### The Engine (Backend)
 - **HLS Pipeline:** Background video transcoding using FFmpeg and BullMQ.
 - **Metadata Extraction:** Automatically captures bitrate, codecs, and resolution.
 - **Dynamic Storage:** Admin-configurable upload and storage directories.
-- **First-User Admin:** The first person to register automatically gains "Sponsor" privileges.
+- **First-User Admin:** The first person to register automatically gains Master Admin privileges.
 
-### 🛠️ Sponsor Control (Admin)
+### Admin Console (Moderation)
 - **Global Kill-Switch:** Instantly hide any video from the archive.
 - **Queue Monitor:** Real-time progress bars for active transcoding jobs.
-- **Comment Scrubbing:** Full moderation list with "Delete" and "Pin" capabilities.
-- **User Management:** Toggle administrative permissions for other students.
+- **Comment Scrubbing:** Full moderation list with Delete and Pin capabilities.
+- **User Management:** Manage users, rename accounts, reset passwords, and toggle Admin permissions.
 
 ---
 
-## 🛠️ Technical Stack
+## Technical Stack
 
-- **OS:** Fedora 43+ (Linux) / macOS (Development)
+- **OS:** Fedora 43+ (Linux)
 - **Backend:** Node.js (Express) + Prisma ORM
-- **Frontend:** Vite + React + Tailwind CSS
+- **Frontend:** Vite + React + TypeScript + Tailwind CSS (v4)
 - **Database:** SQLite (local file-based)
 - **Processing:** FFmpeg (HLS) + Redis/BullMQ (Job Queue)
 - **Streaming:** HLS (Adaptive Bitrate)
 
 ---
 
-## 📦 Installation & Setup
+## Installation & Setup (Fedora)
 
 ### 1. Prerequisites
-- **Node.js** (v18+)
-- **FFmpeg** (v5.0+)
-- **Redis** (Local instance)
+Ensure you have the following installed on your Fedora system:
+```bash
+sudo dnf install nodejs npm ffmpeg redis
+sudo systemctl enable --now redis
+```
 
 ### 2. Backend Setup
 ```bash
+# Clone the repository
+git clone https://github.com/prisms-adam/TheVault.git
+cd TheVault
+
 # Install dependencies
 npm install
 
@@ -53,8 +59,7 @@ npm install
 npx prisma db push
 npx prisma generate
 
-# Set Environment Variables
-# Create a .env file based on the template:
+# Create .env file
 # DATABASE_URL="file:./dev.db"
 # JWT_SECRET="your-secret-key"
 # PORT=3000
@@ -70,13 +75,13 @@ npm run build
 
 ---
 
-## 🚦 How to Run
+## How to Run
 
-### **A. Development Mode**
+### Development Mode
 Start the API and the Transcoding Worker in separate terminals:
 ```bash
 # Terminal 1: API
-npm run dev
+npm start
 
 # Terminal 2: Worker
 npm run worker
@@ -85,33 +90,35 @@ npm run worker
 cd frontend && npm run dev
 ```
 
-### **B. Production Mode (Systemd)**
-For deployment on Fedora, copy the provided `.service` files to `/etc/systemd/system/`:
+### Production Mode (Systemd)
+The repository includes systemd service files for automated startup. Update the `User` and `WorkingDirectory` fields in the files before deployment.
+
 ```bash
 sudo cp vault.service /etc/systemd/system/
 sudo cp vault-worker.service /etc/systemd/system/
+sudo systemctl daemon-reload
 sudo systemctl enable --now vault vault-worker
 ```
 
 ---
 
-## 🛡️ Sponsor Maintenance Tool
-Use the included bash script for common maintenance tasks:
+## Sponsor Maintenance Tool
+Use the included bash script for maintenance tasks:
 ```bash
 ./scripts/vault-admin.sh {backup|clean|restart|ip}
 ```
 - **backup:** Zip the database and uploads folder.
 - **clean:** Purge the temporary upload buffer.
 - **restart:** Cycle the systemd services.
-- **ip:** Scan the LAN for the current server address.
+- **ip:** Scan the LAN for the server address.
 
 ---
 
-## 🧪 Automated Testing
+## Automated Testing
 Verify the integrity of the system using the built-in TDD suite:
 ```bash
 npm test
 ```
 
 ---
-**The Vault** – *Preserving the next generation of visual storytellers.*
+The Vault – Preserving the next generation of visual storytellers.
