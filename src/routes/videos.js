@@ -20,10 +20,10 @@ const storage = multer.diskStorage({
 const upload = multer({ 
   storage,
   fileFilter: (req, file, cb) => {
-    const filetypes = /mp4|mov|mkv/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const filetypes = /mp4|mov|mkv|quicktime|video\/mp4|video\/x-matroska|video\/quicktime/;
+    const extname = /mp4|mov|mkv/.test(path.extname(file.originalname).toLowerCase());
     const mimetype = filetypes.test(file.mimetype);
-    if (mimetype && extname) {
+    if (mimetype || extname) {
       return cb(null, true);
     }
     cb(new Error('Only .mp4, .mov, and .mkv files are allowed!'));

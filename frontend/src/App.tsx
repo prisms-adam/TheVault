@@ -18,6 +18,8 @@ const Navbar = () => {
 
   const logout = async () => {
     await api.post('/auth/logout');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     window.location.href = '/login';
   };
 
@@ -34,8 +36,9 @@ const Navbar = () => {
         {user ? (
           <div className="flex items-center gap-6">
             {user.isAdmin && (
-              <Link to="/admin" className="p-2 glass rounded-lg hover:bg-record transition-all group">
+              <Link to="/admin" className="px-3 py-2 glass rounded-lg hover:bg-record transition-all group flex items-center gap-2">
                 <Database size={16} className="group-hover:text-white" />
+                <span className="group-hover:text-white">Admin</span>
               </Link>
             )}
             <div className="flex items-center gap-3 pl-4 border-l border-white/10">

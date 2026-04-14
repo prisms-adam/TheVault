@@ -23,6 +23,8 @@ const Login = () => {
       
       if (res.data.token) {
         // Successful login/register
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
         navigate(res.data.user.isAdmin ? '/admin' : '/');
         window.location.reload(); // Refresh to update navbar state
       }

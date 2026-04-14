@@ -29,9 +29,17 @@ const Home = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      {videos.length === 0 && (
+        <div className="col-span-full text-center py-20">
+          <p className="text-slate-500 font-black uppercase tracking-widest italic">The Archive is currently empty.</p>
+        </div>
+      )}
       {videos.map(video => {
         const metadata = JSON.parse(video.technicalMetadata || '{}');
         const height = metadata.streams?.find((s: any) => s.height)?.height || '?';
+        const thumbnail = video.thumbnailPath 
+          ? `http://localhost:3000${video.thumbnailPath}` 
+          : 'https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=1000&auto=format&fit=crop';
 
         return (
           <Link 
@@ -40,8 +48,11 @@ const Home = () => {
             className="glass rounded-xl overflow-hidden aspect-video relative group border border-white/5 hover:border-record/50 transition-all"
           >
             <img 
-              src={`http://localhost:3000${video.thumbnailPath}`} 
+              src={thumbnail} 
               className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=1000&auto=format&fit=crop';
+              }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-onyx/90 via-onyx/20 to-transparent" />
             

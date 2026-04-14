@@ -23,14 +23,21 @@ app.use(cookieParser());
 
 // Dynamic static files for uploads
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/uploads/')) {
-    const uploadDir = await getUploadDir();
-    return express.static(path.resolve(uploadDir))(req, res, next);
-  }
-  // Allow serving from the actual folder name if it's different from 'uploads'
   const uploadDir = await getUploadDir();
+  
+  if (req.path.startsWith('/uploads/')) {
+    // Strip '/uploads/' and serve from the actual directory
+    const filePath = req.path.substring(9);
+    return res.sendFile(path.resolve(uploadDir, filePath), (err) => {
+      if (err) next();
+    });
+  }
+
   if (uploadDir !== 'uploads' && req.path.startsWith(`/${uploadDir}/`)) {
-    return express.static(path.resolve(uploadDir))(req, res, next);
+    const filePath = req.path.substring(uploadDir.length + 2);
+    return res.sendFile(path.resolve(uploadDir, filePath), (err) => {
+      if (err) next();
+    });
   }
   next();
 });

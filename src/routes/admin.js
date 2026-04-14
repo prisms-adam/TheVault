@@ -19,16 +19,45 @@ router.get('/videos', async (req, res) => {
   }
 });
 
-// PATCH /api/admin/videos/:id - Update status/pinning
+const fs = require('fs');
+const path = require('path');
+const { getUploadDir } = require('../config');
+
+// PATCH /api/admin/videos/:id - Update status/pinning/metadata
 router.patch('/videos/:id', async (req, res) => {
-  const { status, isFeatured } = req.body;
+  const { status, isFeatured, title, description } = req.body;
   try {
     const updated = await prisma.video.update({
       where: { id: req.params.id },
-      data: { status, isFeatured }
+      data: { status, isFeatured, title, description }
     });
     res.json(updated);
   } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/videos/:id - Permanent deletion
+router.delete('/videos/:id', async (req, res) => {
+  try {
+    const video = await prisma.video.findUnique({ where: { id: req.params.id } });
+    if (!video) return res.status(404).json({ error: 'Video not found' });
+
+    // 1. Delete HLS files from disk
+    const uploadDir = await getUploadDir();
+    const videoDir = path.join(uploadDir, video.id);
+    if (fs.existsSync(videoDir)) {
+      fs.rmSync(videoDir, { recursive: true, force: true });
+    }
+
+    // 2. Delete database record (cascades to comments/reactions)
+    await prisma.reaction.deleteMany({ where: { videoId: video.id } });
+    await prisma.comment.deleteMany({ where: { videoId: video.id } });
+    await prisma.video.delete({ where: { id: req.params.id } });
+
+    res.json({ message: 'Video asset purged successfully' });
+  } catch (error) {
+    console.error('Delete error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

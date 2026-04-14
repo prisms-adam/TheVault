@@ -74,6 +74,27 @@ const Admin = () => {
     fetchData();
   };
 
+  const [editingVideo, setEditingVideo] = useState<string | null>(null);
+  const [editData, setEditData] = useState({ title: '', description: '' });
+
+  const startEditing = (video: any) => {
+    setEditingVideo(video.id);
+    setEditData({ title: video.title, description: video.description || '' });
+  };
+
+  const deleteVideo = async (id: string) => {
+    if (window.confirm("CRITICAL: This will permanently purge the video asset and all associated data. Proceed?")) {
+      await api.delete(`/admin/videos/${id}`);
+      fetchData();
+    }
+  };
+
+  const saveEdit = async (id: string) => {
+    await api.patch(`/admin/videos/${id}`, editData);
+    setEditingVideo(null);
+    fetchData();
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-12">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -82,15 +103,20 @@ const Admin = () => {
           <p className="text-slate-500 uppercase text-[10px] font-black tracking-[0.3em] ml-1">Master Control & Video Ingestion</p>
         </div>
         <div className="flex gap-2 glass p-1 rounded-xl">
-          {['upload', 'videos', 'users', 'comments'].map((t) => (
+          {[
+            { id: 'upload', label: 'Queue Monitor' },
+            { id: 'videos', label: 'Kill-Switch & Pinning' },
+            { id: 'users', label: 'User Management' },
+            { id: 'comments', label: 'Comment Scrubbing' }
+          ].map((t) => (
             <button
-              key={t}
-              onClick={() => setTab(t as any)}
+              key={t.id}
+              onClick={() => setTab(t.id as any)}
               className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                tab === t ? 'bg-record text-white shadow-lg' : 'hover:bg-white/5 text-slate-400'
+                tab === t.id ? 'bg-record text-white shadow-lg' : 'hover:bg-white/5 text-slate-400'
               }`}
             >
-              {t}
+              {t.label}
             </button>
           ))}
         </div>
@@ -157,23 +183,50 @@ const Admin = () => {
               {videos.map(v => (
                 <tr key={v.id} className="hover:bg-white/[0.02] transition-colors">
                   <td className="p-6">
-                    <div className="font-bold text-sm">{v.title}</div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">{new Date(v.createdAt).toLocaleDateString()}</div>
+                    {editingVideo === v.id ? (
+                      <div className="space-y-2">
+                        <input 
+                          value={editData.title}
+                          onChange={(e) => setEditData({...editData, title: e.target.value})}
+                          className="bg-onyx border border-record/30 rounded px-2 py-1 text-xs w-full outline-none"
+                        />
+                        <textarea 
+                          value={editData.description}
+                          onChange={(e) => setEditData({...editData, description: e.target.value})}
+                          className="bg-onyx border border-record/30 rounded px-2 py-1 text-[10px] w-full h-12 outline-none"
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={() => saveEdit(v.id)} className="text-[9px] font-black uppercase text-green-500 hover:text-white transition-colors">Save</button>
+                          <button onClick={() => setEditingVideo(null)} className="text-[9px] font-black uppercase text-slate-500 hover:text-white transition-colors">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="font-bold text-sm">{v.title}</div>
+                        <div className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">{new Date(v.createdAt).toLocaleDateString()}</div>
+                      </>
+                    )}
                   </td>
                   <td className="p-6">
-                    <span className={`text-[10px] font-black px-2 py-1 rounded uppercase ${v.status === 'PUBLIC' ? 'bg-green-500/20 text-green-500' : 'bg-record/20 text-record'}`}>
+                    <button 
+                      onClick={() => updateVideo(v.id, { status: v.status === 'PUBLIC' ? 'HIDDEN' : 'PUBLIC' })}
+                      className={`text-[10px] font-black px-2 py-1 rounded uppercase transition-all ${v.status === 'PUBLIC' ? 'bg-green-500/20 text-green-500' : 'bg-record/20 text-record'}`}
+                    >
                       {v.status}
-                    </span>
+                    </button>
                   </td>
                   <td className="p-6 text-xs text-slate-400 font-semibold uppercase">
                     {v._count.reactions} Reactions • {v._count.comments} Comments
                   </td>
                   <td className="p-6 text-right space-x-2">
-                    <button onClick={() => updateVideo(v.id, { isFeatured: !v.isFeatured })} className={`p-2 rounded-lg transition-all ${v.isFeatured ? 'bg-record text-white' : 'glass text-slate-400'}`}>
+                    <button onClick={() => startEditing(v)} className="p-2 glass rounded-lg text-slate-400 hover:text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                    </button>
+                    <button onClick={() => updateVideo(v.id, { isFeatured: !v.isFeatured })} className={`p-2 rounded-lg transition-all ${v.isFeatured ? 'bg-record text-white shadow-[0_0_10px_rgba(190,18,60,0.5)]' : 'glass text-slate-400'}`}>
                       <Pin size={14} />
                     </button>
-                    <button onClick={() => updateVideo(v.id, { status: v.status === 'PUBLIC' ? 'HIDDEN' : 'PUBLIC' })} className="p-2 glass rounded-lg text-slate-400 hover:text-white">
-                      <EyeOff size={14} />
+                    <button onClick={() => deleteVideo(v.id)} className="p-2 glass rounded-lg text-slate-400 hover:bg-record hover:text-white transition-all">
+                      <Trash2 size={14} />
                     </button>
                   </td>
                 </tr>
