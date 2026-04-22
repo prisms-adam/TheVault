@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-04-22
+
+### Fixed
+- **Startup Script:**
+  - Fixed `sudo` PATH inheritance issue for NVM-installed Node.js tools (npm/npx).
+  - Added automatic detection of user's home directory when running with root privileges.
+  - Improved Redis/Valkey fallback startup logic.
+- **Prisma Compatibility:**
+  - Downgraded from Prisma 7 to 6.2.1 to maintain compatibility with existing schema.
+  - Restored `DATABASE_URL` in datasource configuration for proper migration support.
+- **Frontend Build:**
+  - Fixed missing state variables (`editingVideo`, `editData`) in Admin.tsx causing TypeScript compilation errors.
+
 ## [1.3.0] - 2026-04-22
 
 ### Added

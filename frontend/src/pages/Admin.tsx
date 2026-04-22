@@ -15,6 +15,10 @@ const Admin = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [queue, setQueue] = useState<any>(null);
   const [tab, setTab] = useState<'upload' | 'videos' | 'categories' | 'users' | 'comments'>('upload');
+  
+  // Video editing state
+  const [editingVideo, setEditingVideo] = useState<string | null>(null);
+  const [editData, setEditData] = useState({ title: '', description: '', tags: '' });
 
   const fetchData = async () => {
     try {

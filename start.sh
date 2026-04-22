@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Preserve user PATH for npm/npx when running with sudo
+if [ "$EUID" -eq 0 ]; then
+    # Use SUDO_USER's home directory, not root's
+    USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+    export PATH="$USER_HOME/.nvm/versions/node/v24.12.0/bin:$PATH"
+fi
+
 # Configuration
 API_DIR="."
 FRONTEND_DIR="./frontend"
@@ -80,8 +87,14 @@ if ! pgrep -x "redis-server" > /dev/null && ! pgrep -x "valkey-server" > /dev/nu
     fi
     
     # Fallback to manual start if still not running
-    if ! pgrep -x "redis-server" > /dev/null; then
-        redis-server --daemonize yes
+    if ! pgrep -x "redis-server" > /dev/null && ! pgrep -x "valkey-server" > /dev/null; then
+        if command -v redis-server > /dev/null; then
+            redis-server --daemonize yes
+        elif command -v valkey-server > /dev/null; then
+            valkey-server --daemonize yes
+        else
+            echo -e "${RED}❌ Redis/Valkey binary not found.${NC}"
+        fi
     fi
     
     # Wait a moment for Redis to start
