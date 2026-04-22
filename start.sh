@@ -40,6 +40,18 @@ if [ "$PORT" -eq 80 ] && [ "$EUID" -ne 0 ]; then
     echo "If the server fails to start, try: sudo ./start.sh"
 fi
 
+# 2. Check and open Firewall (Fedora/RHEL)
+if [ "$PORT" -eq 80 ] && [ "$EUID" -eq 0 ]; then
+    if command -v firewall-cmd > /dev/null; then
+        if ! firewall-cmd --list-services | grep -q "http"; then
+            echo "Opening HTTP port in firewall..."
+            firewall-cmd --permanent --add-service=http > /dev/null 2>&1
+            firewall-cmd --reload > /dev/null 2>&1
+            echo -e "${GREEN}✅ Firewall port 80 opened.${NC}"
+        fi
+    fi
+fi
+
 # 2. Check for Redis (required for BullMQ)
 if ! pgrep -x "redis-server" > /dev/null && ! pgrep -x "valkey-server" > /dev/null; then
     echo -e "${RED}⚠️  Redis/Valkey is not running!${NC}"
