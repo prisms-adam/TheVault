@@ -108,13 +108,35 @@ if ! pgrep -x "redis-server" > /dev/null && ! pgrep -x "valkey-server" > /dev/nu
     fi
 fi
 
-# 3. Ensure database and folders are initialized
+# 3. Ensure Prisma Client is generated and database is initialized
 echo "Checking system status..."
 mkdir -p "$API_DIR/uploads"
 mkdir -p "$API_DIR/temp"
+mkdir -p "$API_DIR/prisma"
+
+# Check if Prisma Client exists, generate if missing
+if [ ! -f "$API_DIR/node_modules/@prisma/client/index.js" ]; then
+    echo "⚠️  Prisma Client not found. Generating..."
+    if ! npx prisma generate; then
+        echo -e "${RED}❌ Failed to generate Prisma Client!${NC}"
+        echo "Please ensure dependencies are installed: npm install"
+        exit 1
+    fi
+    echo -e "${GREEN}✅ Prisma Client generated.${NC}"
+else
+    echo -e "${GREEN}✅ Prisma Client found.${NC}"
+fi
+
+# Initialize or update database schema
 if [ ! -f "$API_DIR/prisma/dev.db" ] && [ ! -f "$API_DIR/dev.db" ]; then
     echo "Initializing SQLite database..."
-    npx prisma db push
+    if ! npx prisma db push --accept-data-loss; then
+        echo -e "${RED}❌ Failed to initialize database!${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}✅ Database initialized.${NC}"
+else
+    echo -e "${GREEN}✅ Database found.${NC}"
 fi
 
 # Function to kill all background processes on exit
