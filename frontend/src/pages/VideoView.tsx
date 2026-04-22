@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import api from '../lib/api';
 import VideoPlayer from '../components/VideoPlayer';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
-import { MessageSquare, Pin, Trash2, Send, Smile, Plus } from 'lucide-react';
+import { MessageSquare, Pin, Trash2, Send, Smile, Plus, ThumbsUp, ThumbsDown, Eye, Hash } from 'lucide-react';
 
 interface Video {
   id: string;
@@ -11,8 +11,12 @@ interface Video {
   description: string;
   hlsPath: string;
   thumbnailPath: string;
+  tags: string;
+  views: number;
+  likes: number;
   comments: any[];
   reactions: { id: string, emoji: string, userId: string }[];
+  votes: { userId: string, value: number }[];
 }
 
 const VideoView = () => {
@@ -35,6 +39,12 @@ const VideoView = () => {
   const addReaction = async (emoji: string) => {
     await api.post(`/reactions/${id}`, { emoji });
     setShowPicker(false);
+    fetchVideo();
+  };
+
+  const addVote = async (value: number) => {
+    if (!user) return alert('Please login to vote');
+    await api.post(`/votes/${id}`, { value });
     fetchVideo();
   };
 
@@ -65,6 +75,8 @@ const VideoView = () => {
     return acc;
   }, {});
 
+  const myVote = video.votes?.find(v => v.userId === user?.id)?.value;
+
   // Sort comments: newest first
   const sortedComments = [...video.comments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -76,49 +88,80 @@ const VideoView = () => {
           poster={`/vault${video.thumbnailPath}`} 
         />
         
-        {/* Reaction Bar */}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <div className="relative">
-            <button 
-              onClick={() => user ? setShowPicker(!showPicker) : alert('Please login to react')}
-              className="p-2 glass rounded-full hover:bg-white/10 transition-all text-slate-400 hover:text-white flex items-center gap-1 group"
-            >
-              <Smile size={20} className="group-hover:scale-110 transition-transform" />
-              <Plus size={12} />
-            </button>
-            
-            {showPicker && user && (
-              <div className="absolute top-full left-0 mt-2 z-50">
-                <div className="fixed inset-0" onClick={() => setShowPicker(false)} />
-                <div className="relative shadow-2xl border border-white/10 rounded-2xl overflow-hidden">
-                  <EmojiPicker 
-                    theme={Theme.DARK}
-                    onEmojiClick={(emojiData) => addReaction(emojiData.emoji)}
-                    lazyLoadEmojis={true}
-                  />
+        {/* Engagement Bar */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <button 
+                onClick={() => user ? setShowPicker(!showPicker) : alert('Please login to react')}
+                className="p-2 glass rounded-full hover:bg-white/10 transition-all text-slate-400 hover:text-white flex items-center gap-1 group"
+              >
+                <Smile size={20} className="group-hover:scale-110 transition-transform" />
+                <Plus size={12} />
+              </button>
+              
+              {showPicker && user && (
+                <div className="absolute top-full left-0 mt-2 z-50">
+                  <div className="fixed inset-0" onClick={() => setShowPicker(false)} />
+                  <div className="relative shadow-2xl border border-white/10 rounded-2xl overflow-hidden">
+                    <EmojiPicker 
+                      theme={Theme.DARK}
+                      onEmojiClick={(emojiData) => addReaction(emojiData.emoji)}
+                      lazyLoadEmojis={true}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {Object.entries(reactionGroups).map(([emoji, data]: [string, any]) => (
+              <button
+                key={emoji}
+                onClick={() => user ? addReaction(emoji) : alert('Please login to react')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+                  data.me 
+                    ? 'bg-record/20 border-record/40 text-record shadow-[0_0_10px_rgba(190,18,60,0.2)]' 
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                }`}
+              >
+                <span className="text-lg">{emoji}</span>
+                <span className="text-xs font-black">{data.count}</span>
+              </button>
+            ))}
           </div>
 
-          {Object.entries(reactionGroups).map(([emoji, data]: [string, any]) => (
-            <button
-              key={emoji}
-              onClick={() => user ? addReaction(emoji) : alert('Please login to react')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
-                data.me 
-                  ? 'bg-record/20 border-record/40 text-record shadow-[0_0_10px_rgba(190,18,60,0.2)]' 
-                  : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
-              }`}
+          <div className="flex items-center gap-2 glass p-1 rounded-full border border-white/5">
+            <button 
+              onClick={() => addVote(1)}
+              className={`p-2.5 rounded-full transition-all flex items-center gap-2 ${myVote === 1 ? 'bg-record text-white shadow-lg' : 'hover:bg-white/5 text-slate-400'}`}
             >
-              <span className="text-lg">{emoji}</span>
-              <span className="text-xs font-black">{data.count}</span>
+              <ThumbsUp size={18} />
+              <span className="text-xs font-black">{video.likes}</span>
             </button>
-          ))}
+            <div className="w-px h-4 bg-white/10" />
+            <button 
+              onClick={() => addVote(-1)}
+              className={`p-2.5 rounded-full transition-all ${myVote === -1 ? 'bg-record text-white shadow-lg' : 'hover:bg-white/5 text-slate-400'}`}
+            >
+              <ThumbsDown size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="mt-8">
-          <h1 className="text-4xl font-black uppercase tracking-tighter mb-4 italic">{video.title}</h1>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-4xl font-black uppercase tracking-tighter italic">{video.title}</h1>
+              <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-2">
+                <span className="flex items-center gap-1.5 text-record"><Eye size={12} /> {video.views} Views</span>
+                {video.tags && video.tags.split(',').map(tag => (
+                  <span key={tag} className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded text-slate-400">
+                    <Hash size={10} /> {tag.trim()}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
           <p className="text-slate-400 text-lg leading-relaxed glass p-6 rounded-2xl">{video.description || "No session metadata provided."}</p>
         </div>
       </div>

@@ -10,17 +10,20 @@ The Vault is a high-performance, LAN-exclusive video repository designed to look
 - **Deep Onyx Theme:** A modern, distraction-free aesthetic with Record Red (#BE123C) accents.
 - **Theater Mode:** High-quality HLS playback with technical badges (e.g., 1080p, HLS).
 - **Adaptive Bitrate:** Automatic fallback from 1080p to 720p to ensure smooth streaming.
-- **Engagement Console:** Emoji reactions and a comment feed.
+- **Categorized Archive:** Grouped video sections managed via dynamic tags.
+- **Engagement Console:** Emoji reactions, comment feed, and like/dislike system.
 
 ### The Engine (Backend)
 - **HLS Pipeline:** Background video transcoding using FFmpeg and BullMQ.
-- **Metadata Extraction:** Automatically captures bitrate, codecs, and resolution.
+- **Metadata Extraction:** Automatically captures duration, bitrate, codecs, and resolution.
 - **Dynamic Storage:** Admin-configurable upload and storage directories.
 - **First-User Admin:** The first person to register automatically gains Master Admin privileges.
 
 ### Admin Console (Moderation)
 - **Global Kill-Switch:** Instantly hide any video from the archive.
 - **Queue Monitor:** Real-time progress bars for active transcoding jobs.
+- **Category Management:** Define homepage sections based on tag queries.
+- **Tagging:** Manage video tags for categorization.
 - **Comment Scrubbing:** Full moderation list with Delete and Pin capabilities.
 - **User Management:** Manage users, rename accounts, reset passwords, and toggle Admin permissions.
 

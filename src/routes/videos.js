@@ -104,14 +104,16 @@ router.get('/', async (req, res) => {
 // GET /api/videos/:id
 router.get('/:id', async (req, res) => {
   try {
-    const video = await prisma.video.findUnique({
+    const video = await prisma.video.update({
       where: { id: req.params.id },
+      data: { views: { increment: 1 } },
       include: {
         comments: {
           include: { user: { select: { username: true } } },
           orderBy: { createdAt: 'desc' }
         },
-        reactions: true
+        reactions: true,
+        votes: true
       }
     });
     

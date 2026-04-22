@@ -8,6 +8,8 @@ const videoRoutes = require('./routes/videos');
 const adminRoutes = require('./routes/admin');
 const commentRoutes = require('./routes/comments');
 const reactionRoutes = require('./routes/reactions');
+const voteRoutes = require('./routes/votes');
+const prisma = require('./db');
 
 const { getUploadDir } = require('./config');
 
@@ -34,6 +36,12 @@ app.use('/vault/api/videos', videoRoutes);
 app.use('/vault/api/admin', adminRoutes);
 app.use('/vault/api/comments', commentRoutes);
 app.use('/vault/api/reactions', reactionRoutes);
+app.use('/vault/api/votes', voteRoutes);
+
+app.get('/vault/api/categories', async (req, res) => {
+  const categories = await prisma.category.findMany({ orderBy: { order: 'asc' } });
+  res.json(categories);
+});
 
 // Dynamic static files for uploads - Moved AFTER API routes
 app.use(async (req, res, next) => {

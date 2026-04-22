@@ -25,11 +25,11 @@ const { getUploadDir } = require('../config');
 
 // PATCH /api/admin/videos/:id - Update status/pinning/metadata
 router.patch('/videos/:id', async (req, res) => {
-  const { status, isFeatured, title, description } = req.body;
+  const { status, isFeatured, title, description, tags } = req.body;
   try {
     const updated = await prisma.video.update({
       where: { id: req.params.id },
-      data: { status, isFeatured, title, description }
+      data: { status, isFeatured, title, description, tags }
     });
     res.json(updated);
   } catch (error) {
@@ -155,6 +155,34 @@ router.get('/comments', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// Categories Management
+router.get('/categories', async (req, res) => {
+  const categories = await prisma.category.findMany({ orderBy: { order: 'asc' } });
+  res.json(categories);
+});
+
+router.post('/categories', async (req, res) => {
+  const { name, tagQuery, order } = req.body;
+  const category = await prisma.category.create({
+    data: { name, tagQuery, order: order || 0 }
+  });
+  res.json(category);
+});
+
+router.patch('/categories/:id', async (req, res) => {
+  const { name, tagQuery, order } = req.body;
+  const category = await prisma.category.update({
+    where: { id: req.params.id },
+    data: { name, tagQuery, order }
+  });
+  res.json(category);
+});
+
+router.delete('/categories/:id', async (req, res) => {
+  await prisma.category.delete({ where: { id: req.params.id } });
+  res.json({ message: 'Category deleted' });
 });
 
 module.exports = router;

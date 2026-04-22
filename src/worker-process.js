@@ -83,6 +83,7 @@ const worker = new Worker('video-processing', async (job) => {
     fs.writeFileSync(masterPlaylistPath, masterPlaylistContent);
 
     // 4. Update Database
+    const metadataObj = JSON.parse(technicalMetadata);
     await prisma.video.update({
       where: { id: videoId },
       data: {
@@ -90,6 +91,7 @@ const worker = new Worker('video-processing', async (job) => {
         hlsPath: `/${baseUploadDir}/${videoId}/master.m3u8`,
         thumbnailPath: `/${baseUploadDir}/${videoId}/thumbnail.png`,
         technicalMetadata,
+        duration: metadataObj.duration || 0,
       },
     });
 

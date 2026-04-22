@@ -11,6 +11,12 @@ NC='\033[0m' # No Color
 
 echo "🚀 Starting The Vault Services..."
 
+# 0. Cleanup any existing instances
+echo "Cleaning up existing processes..."
+pkill -f "node"
+pkill -f "redis-server"
+sleep 2
+
 # 1. Check for .env file
 if [ ! -f "$API_DIR/.env" ]; then
     echo -e "${RED}⚠️  Warning: .env file not found!${NC}"

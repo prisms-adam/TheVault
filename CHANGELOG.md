@@ -2,14 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.0] - 2026-04-22
+## [1.3.0] - 2026-04-22
 
 ### Added
-- **Production Hosting:**
-  - Configured the system for hosting at `http://SERVER_IP/vault` on port 80.
-  - Implemented subpath routing in both Express (backend) and React (frontend).
-  - Updated API and asset delivery to work seamlessly under the `/vault` prefix.
-  - Added automated port migration (3000 -> 80) and frontend production builds to `start.sh`.
+- **Categorization & Engagement System:**
+  - Added video tagging system for categorized homepage sections.
+  - Implemented Admin Console category management.
+  - Added video engagement features: Like/Dislike thumbs and view counting.
+  - Implemented automatic sorting by upload date, name, length, likes, and views.
+  - Added automatic duration extraction for all videos.
+- **Maintenance:**
+  - Updated `start.sh` to automatically clean up lingering processes on startup.
 
 ## [1.1.0] - 2026-04-22
 
