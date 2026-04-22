@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Upload, Loader2, Trash2, Pin, User as UserIcon } from 'lucide-react';
+import { Upload, Loader2, Trash2, Pin, User as UserIcon, Hash, Plus } from 'lucide-react';
 
 const Admin = () => {
   const [file, setFile] = useState<File | null>(null);

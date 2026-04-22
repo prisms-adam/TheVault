@@ -60,7 +60,7 @@ const Home = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const renderVideoGrid = (vids: Video[], categoryId: string) => (
+  const renderVideoGrid = (vids: Video[]) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
       {vids.map(video => {
         const metadata = JSON.parse(video.technicalMetadata || '{}');
@@ -148,7 +148,7 @@ const Home = () => {
               <h2 className="text-3xl font-black uppercase italic tracking-tighter text-record">{cat.name}</h2>
               <SortDropdown categoryId={cat.id} />
             </header>
-            {renderVideoGrid(getSortedVideos(catVids, cat.id), cat.id)}
+            {renderVideoGrid(getSortedVideos(catVids, cat.id))}
           </section>
         );
       })}
@@ -159,7 +159,7 @@ const Home = () => {
             <h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-400">General Archive</h2>
             <SortDropdown categoryId="general" />
           </header>
-          {renderVideoGrid(getSortedVideos(uncategorized, 'general'), 'general')}
+          {renderVideoGrid(getSortedVideos(uncategorized, 'general'))}
         </section>
       )}
     </div>
