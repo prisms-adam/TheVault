@@ -28,33 +28,35 @@ app.use(express.json({ limit: '5gb' }));
 app.use(express.urlencoded({ limit: '5gb', extended: true }));
 app.use(cookieParser());
 
-// Dynamic static files for uploads
-app.use(async (req, res, next) => {
-  const uploadDir = await getUploadDir();
-  
-  // Look for /vault/uploads/ or /vault/[custom_dir]/
-  if (req.path.startsWith('/vault/uploads/')) {
-    const filePath = req.path.substring(15); // Length of '/vault/uploads/'
-    return res.sendFile(path.resolve(uploadDir, filePath), (err) => {
-      if (err) next();
-    });
-  }
-
-  if (uploadDir !== 'uploads' && req.path.startsWith(`/vault/${uploadDir}/`)) {
-    const filePath = req.path.substring(uploadDir.length + 8); // Length of '/vault/' + uploadDir + '/'
-    return res.sendFile(path.resolve(uploadDir, filePath), (err) => {
-      if (err) next();
-    });
-  }
-  next();
-});
-
 // Routes
 app.use('/vault/api/auth', authRoutes);
 app.use('/vault/api/videos', videoRoutes);
 app.use('/vault/api/admin', adminRoutes);
 app.use('/vault/api/comments', commentRoutes);
 app.use('/vault/api/reactions', reactionRoutes);
+
+// Dynamic static files for uploads - Moved AFTER API routes
+app.use(async (req, res, next) => {
+  if (!req.path.startsWith('/vault/')) return next();
+  
+  const uploadDir = await getUploadDir();
+  
+  // Look for /vault/uploads/ or /vault/[custom_dir]/
+  if (req.path.startsWith('/vault/uploads/')) {
+    const filePath = req.path.substring(15);
+    return res.sendFile(path.resolve(uploadDir, filePath), (err) => {
+      if (err) next();
+    });
+  }
+
+  if (uploadDir !== 'uploads' && req.path.startsWith(`/vault/${uploadDir}/`)) {
+    const filePath = req.path.substring(uploadDir.length + 8);
+    return res.sendFile(path.resolve(uploadDir, filePath), (err) => {
+      if (err) next();
+    });
+  }
+  next();
+});
 
 // Serve Frontend in Production
 const frontendDist = path.join(__dirname, '../frontend/dist');
