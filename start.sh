@@ -44,9 +44,18 @@ fi
 if ! pgrep -x "redis-server" > /dev/null; then
     echo -e "${RED}⚠️  Redis is not running!${NC}"
     echo "Attempting to start redis-server..."
+    
+    # Try starting with systemctl (common on Fedora/RHEL)
     if command -v systemctl > /dev/null; then
-        sudo systemctl start redis
-    else
+        if systemctl list-unit-files | grep -q "^redis.service"; then
+            sudo systemctl start redis
+        elif systemctl list-unit-files | grep -q "^redis-server.service"; then
+            sudo systemctl start redis-server
+        fi
+    fi
+    
+    # Fallback to manual start if still not running
+    if ! pgrep -x "redis-server" > /dev/null; then
         redis-server --daemonize yes
     fi
     
@@ -55,6 +64,7 @@ if ! pgrep -x "redis-server" > /dev/null; then
     
     if ! pgrep -x "redis-server" > /dev/null; then
         echo -e "${RED}❌ Failed to start Redis. Worker will not function correctly.${NC}"
+        echo "Please ensure redis is installed: sudo dnf install redis"
     else
         echo -e "${GREEN}✅ Redis started.${NC}"
     fi

@@ -53,9 +53,13 @@ app.use('/vault/api/reactions', reactionRoutes);
 const frontendDist = path.join(__dirname, '../frontend/dist');
 app.use('/vault', express.static(frontendDist));
 
-// Fallback for SPA routing under /vault
-app.get('/vault/:splat*', (req, res) => {
-  res.sendFile(path.join(frontendDist, 'index.html'));
+// Fallback for SPA routing under /vault - Using a simple use() to avoid path-to-regexp issues
+app.use('/vault', (req, res, next) => {
+  // Only serve index.html if it's a GET request and not for an API/Asset
+  if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.includes('.')) {
+    return res.sendFile(path.join(frontendDist, 'index.html'));
+  }
+  next();
 });
 
 // Redirect root to /vault
