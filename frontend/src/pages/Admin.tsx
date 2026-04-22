@@ -7,6 +7,7 @@ const Admin = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const [videos, setVideos] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -42,14 +43,23 @@ const Admin = () => {
     if (!file) return;
 
     setStatus('uploading');
+    setUploadProgress(0);
     const formData = new FormData();
     formData.append('video', file);
     formData.append('title', title);
     formData.append('description', description);
 
     try {
-      await api.post('/videos/upload', formData);
+      await api.post('/videos/upload', formData, {
+        onUploadProgress: (progressEvent) => {
+          const progress = progressEvent.total
+            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            : 0;
+          setUploadProgress(progress);
+        },
+      });
       setStatus('success');
+      setUploadProgress(100);
       setFile(null);
       setTitle('');
       setDescription('');
@@ -179,8 +189,29 @@ const Admin = () => {
                   <span className="text-xs font-black uppercase tracking-widest text-slate-400">{file ? file.name : "Select High-Bitrate Master"}</span>
                 </div>
               </div>
-              <button disabled={status === 'uploading' || !file} className="w-full bg-record hover:bg-record/80 disabled:bg-slate-800 text-white font-black uppercase py-4 rounded-2xl transition-all flex items-center justify-center gap-3">
-                {status === 'uploading' ? <Loader2 className="animate-spin" size={20} /> : "Initialize Upload"}
+              <button 
+                disabled={status === 'uploading' || !file} 
+                className="w-full relative overflow-hidden bg-slate-800 disabled:cursor-not-allowed text-white font-black uppercase py-4 rounded-2xl transition-all flex items-center justify-center gap-3"
+              >
+                {status === 'uploading' && (
+                  <div 
+                    className="absolute inset-0 bg-record/40 transition-all duration-300" 
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                )}
+                
+                <span className="relative z-10 flex items-center gap-3">
+                  {status === 'uploading' ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      INGESTING {uploadProgress}%
+                    </>
+                  ) : status === 'success' ? (
+                    "UPLOAD COMPLETE"
+                  ) : (
+                    "Initialize Upload"
+                  )}
+                </span>
               </button>
             </form>
           </section>
