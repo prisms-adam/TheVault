@@ -37,7 +37,7 @@ const Home = () => {
       {videos.map(video => {
         const metadata = JSON.parse(video.technicalMetadata || '{}');
         const height = metadata.streams?.find((s: any) => s.height)?.height || '?';
-        const assetBase = `${window.location.protocol}//${window.location.hostname}:3000`;
+        const assetBase = '/vault';
         const thumbnail = video.thumbnailPath 
           ? `${assetBase}${video.thumbnailPath}` 
           : 'https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=1000&auto=format&fit=crop';

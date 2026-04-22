@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-04-22
+
+### Added
+- **Production Hosting:**
+  - Configured the system for hosting at `http://SERVER_IP/vault` on port 80.
+  - Implemented subpath routing in both Express (backend) and React (frontend).
+  - Updated API and asset delivery to work seamlessly under the `/vault` prefix.
+  - Added automated port migration (3000 -> 80) and frontend production builds to `start.sh`.
+
 ## [1.1.0] - 2026-04-22
 
 ### Added

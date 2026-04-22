@@ -20,7 +20,7 @@ const Navbar = () => {
     await api.post('/auth/logout');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = '/login';
+    window.location.href = '/vault/login';
   };
 
   return (
@@ -60,7 +60,7 @@ const Navbar = () => {
 
 const App = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/vault">
       <div className="min-h-screen selection:bg-record selection:text-white flex flex-col">
         <Navbar />
         <main className="container mx-auto px-6 py-10 flex-grow">

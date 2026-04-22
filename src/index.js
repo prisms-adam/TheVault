@@ -25,16 +25,16 @@ app.use(cookieParser());
 app.use(async (req, res, next) => {
   const uploadDir = await getUploadDir();
   
-  if (req.path.startsWith('/uploads/')) {
-    // Strip '/uploads/' and serve from the actual directory
-    const filePath = req.path.substring(9);
+  // Look for /vault/uploads/ or /vault/[custom_dir]/
+  if (req.path.startsWith('/vault/uploads/')) {
+    const filePath = req.path.substring(15); // Length of '/vault/uploads/'
     return res.sendFile(path.resolve(uploadDir, filePath), (err) => {
       if (err) next();
     });
   }
 
-  if (uploadDir !== 'uploads' && req.path.startsWith(`/${uploadDir}/`)) {
-    const filePath = req.path.substring(uploadDir.length + 2);
+  if (uploadDir !== 'uploads' && req.path.startsWith(`/vault/${uploadDir}/`)) {
+    const filePath = req.path.substring(uploadDir.length + 8); // Length of '/vault/' + uploadDir + '/'
     return res.sendFile(path.resolve(uploadDir, filePath), (err) => {
       if (err) next();
     });
@@ -43,14 +43,24 @@ app.use(async (req, res, next) => {
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/videos', videoRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/comments', commentRoutes);
-app.use('/api/reactions', reactionRoutes);
+app.use('/vault/api/auth', authRoutes);
+app.use('/vault/api/videos', videoRoutes);
+app.use('/vault/api/admin', adminRoutes);
+app.use('/vault/api/comments', commentRoutes);
+app.use('/vault/api/reactions', reactionRoutes);
 
+// Serve Frontend in Production
+const frontendDist = path.join(__dirname, '../frontend/dist');
+app.use('/vault', express.static(frontendDist));
+
+// Fallback for SPA routing under /vault
+app.get('/vault/*', (req, res) => {
+  res.sendFile(path.join(frontendDist, 'index.html'));
+});
+
+// Redirect root to /vault
 app.get('/', (req, res) => {
-  res.json({ message: 'The Vault API is running' });
+  res.redirect('/vault');
 });
 
 app.listen(PORT, '0.0.0.0', () => {

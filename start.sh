@@ -18,10 +18,26 @@ if [ ! -f "$API_DIR/.env" ]; then
     cat > "$API_DIR/.env" <<EOF
 DATABASE_URL="file:./dev.db"
 JWT_SECRET="vault-development-secret-key-2026"
-PORT=3000
+PORT=80
 REDIS_HOST="127.0.0.1"
 EOF
-    echo -e "${GREEN}✅ Created .env with default values.${NC}"
+    echo -e "${GREEN}✅ Created .env with default values (Port 80).${NC}"
+else
+    # If .env exists, check if port is 3000 and offer to update to 80
+    CURRENT_PORT=$(grep PORT "$API_DIR/.env" | cut -d '=' -f2 | tr -d '"' | tr -d '\r')
+    if [ "$CURRENT_PORT" == "3000" ]; then
+        echo -e "${GREEN}Found port 3000 in .env. Updating to port 80 for /vault hosting...${NC}"
+        sed -i 's/PORT=3000/PORT=80/' "$API_DIR/.env"
+    fi
+fi
+
+# Load PORT from .env
+PORT=$(grep PORT "$API_DIR/.env" | cut -d '=' -f2 | tr -d '"' | tr -d '\r')
+PORT=${PORT:-80}
+
+if [ "$PORT" -eq 80 ] && [ "$EUID" -ne 0 ]; then
+    echo -e "${RED}⚠️  Note: Hosting on port 80 usually requires root privileges.${NC}"
+    echo "If the server fails to start, try: sudo ./start.sh"
 fi
 
 # 2. Check for Redis (required for BullMQ)
@@ -64,25 +80,24 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # 4. Start services
-echo -e "${GREEN}📡 Starting Backend (API)...${NC}"
+echo -e "${GREEN}📦 Building Frontend for production...${NC}"
+(cd "$FRONTEND_DIR" && npm install --silent && npm run build)
+
+echo -e "${GREEN}📡 Starting Backend (API & Frontend Host)...${NC}"
 npm run dev &
 
 echo -e "${GREEN}⚙️  Starting Worker (Transcoding)...${NC}"
 npm run worker &
-
-echo -e "${GREEN}💻 Starting Frontend (Vite)...${NC}"
-(cd "$FRONTEND_DIR" && npm run dev) &
 
 # 5. Detect LAN IP
 LAN_IP=$(hostname -I | awk '{print $1}')
 
 echo -e "${GREEN}✨ All services are starting!${NC}"
 echo "--------------------------------------------------"
-echo -e "Local:    http://localhost:5173"
+echo -e "Local:    http://localhost:$PORT/vault"
 if [ ! -z "$LAN_IP" ]; then
-    echo -e "Network:  http://$LAN_IP:5173"
+    echo -e "Network:  http://$LAN_IP:$PORT/vault"
 fi
-echo "API:      http://$LAN_IP:3000 (Backend)"
 echo "--------------------------------------------------"
 echo "Press Ctrl+C to stop all services."
 

@@ -68,7 +68,7 @@ const VideoView = () => {
   // Sort comments: newest first
   const sortedComments = [...video.comments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const assetBase = `${window.location.protocol}//${window.location.hostname}:3000`;
+  const assetBase = '/vault';
 
   return (
     <div className="flex flex-col gap-8 max-w-5xl mx-auto">
