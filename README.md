@@ -77,8 +77,15 @@ npm run build
 
 ## How to Run
 
-### Development Mode
-Start the API and the Transcoding Worker in separate terminals:
+### One-Step Startup (Recommended)
+The easiest way to start the entire stack (API, Worker, and Frontend) with LAN access enabled:
+```bash
+./start.sh
+```
+The script will automatically check for prerequisites, initialize the database if needed, and provide you with the LAN URL for remote access.
+
+### Development Mode (Manual)
+If you prefer to start services separately:
 ```bash
 # Terminal 1: API
 npm start

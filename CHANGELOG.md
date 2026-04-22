@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-04-22
+
+### Added
+- **Orchestration:**
+  - Created `start.sh` for one-command startup of Backend, Worker, and Frontend.
+  - Automated `.env` generation and Redis health checks in the start script.
+  - Automated SQLite database initialization and directory setup.
+- **Networking:**
+  - Enabled LAN-wide access for the Vite frontend.
+  - Added automatic LAN IP detection to the startup output for easier remote access.
+
 ## [1.0.0] - 2026-04-14
 
 ### Added
