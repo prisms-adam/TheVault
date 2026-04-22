@@ -19,6 +19,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage,
+  limits: { fileSize: 5 * 1024 * 1024 * 1024 }, // 5GB
   fileFilter: (req, file, cb) => {
     const filetypes = /mp4|mov|mkv|quicktime|video\/mp4|video\/x-matroska|video\/quicktime/;
     const extname = /mp4|mov|mkv/.test(path.extname(file.originalname).toLowerCase());
@@ -31,7 +32,16 @@ const upload = multer({
 });
 
 // POST /api/videos/upload
-router.post('/upload', authenticate, upload.single('video'), async (req, res) => {
+router.post('/upload', authenticate, (req, res, next) => {
+  upload.single('video')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ error: `Multer error: ${err.message}` });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No video file uploaded' });
   }

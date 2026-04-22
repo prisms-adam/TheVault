@@ -18,7 +18,8 @@ app.use(cors({
   origin: true,
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '5gb' }));
+app.use(express.urlencoded({ limit: '5gb', extended: true }));
 app.use(cookieParser());
 
 // Dynamic static files for uploads

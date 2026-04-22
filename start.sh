@@ -92,6 +92,7 @@ fi
 # 3. Ensure database and folders are initialized
 echo "Checking system status..."
 mkdir -p "$API_DIR/uploads"
+mkdir -p "$API_DIR/temp"
 if [ ! -f "$API_DIR/prisma/dev.db" ] && [ ! -f "$API_DIR/dev.db" ]; then
     echo "Initializing SQLite database..."
     npx prisma db push

@@ -87,8 +87,8 @@ const worker = new Worker('video-processing', async (job) => {
       where: { id: videoId },
       data: {
         status: 'PUBLIC',
-        hlsPath: `/${baseUploadDir}/${videoId}/master.m3u8`,
-        thumbnailPath: `/${baseUploadDir}/${videoId}/thumbnail.png`,
+        hlsPath: `/vault/${baseUploadDir}/${videoId}/master.m3u8`,
+        thumbnailPath: `/vault/${baseUploadDir}/${videoId}/thumbnail.png`,
         technicalMetadata,
       },
     });
