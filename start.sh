@@ -41,13 +41,20 @@ if [ "$PORT" -eq 80 ] && [ "$EUID" -ne 0 ]; then
 fi
 
 # 2. Check for Redis (required for BullMQ)
-if ! pgrep -x "redis-server" > /dev/null; then
-    echo -e "${RED}⚠️  Redis is not running!${NC}"
-    echo "Attempting to start redis-server..."
+if ! pgrep -x "redis-server" > /dev/null && ! pgrep -x "valkey-server" > /dev/null; then
+    echo -e "${RED}⚠️  Redis/Valkey is not running!${NC}"
+    echo "Attempting to start..."
+
+    # Fix Memory Overcommit warning (requires root)
+    if [ "$EUID" -eq 0 ]; then
+        sysctl vm.overcommit_memory=1 > /dev/null 2>&1
+    fi
     
     # Try starting with systemctl (common on Fedora/RHEL)
     if command -v systemctl > /dev/null; then
-        if systemctl list-unit-files | grep -q "^redis.service"; then
+        if systemctl list-unit-files | grep -q "^valkey.service"; then
+            sudo systemctl start valkey
+        elif systemctl list-unit-files | grep -q "^redis.service"; then
             sudo systemctl start redis
         elif systemctl list-unit-files | grep -q "^redis-server.service"; then
             sudo systemctl start redis-server
