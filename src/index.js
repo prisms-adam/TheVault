@@ -14,6 +14,12 @@ const { getUploadDir } = require('./config');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Request Logging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
 app.use(cors({
   origin: true,
   credentials: true,
@@ -70,4 +76,10 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`The Vault Studio Console running on http://0.0.0.0:${PORT}`);
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error('[GLOBAL ERROR HANDLER]:', err);
+  res.status(500).json({ error: 'Internal server error', details: err.message });
 });

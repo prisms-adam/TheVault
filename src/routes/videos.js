@@ -21,24 +21,32 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 * 1024 }, // 5GB
   fileFilter: (req, file, cb) => {
+    console.log(`[MULTER FILTER] Incoming file: ${file.originalname} (${file.mimetype})`);
     const filetypes = /mp4|mov|mkv|quicktime|video\/mp4|video\/x-matroska|video\/quicktime/;
     const extname = /mp4|mov|mkv/.test(path.extname(file.originalname).toLowerCase());
     const mimetype = filetypes.test(file.mimetype);
+    
     if (mimetype || extname) {
+      console.log(`[MULTER FILTER] Accepted: ${file.originalname}`);
       return cb(null, true);
     }
+    console.warn(`[MULTER FILTER] Rejected: ${file.originalname} - Mime: ${file.mimetype}`);
     cb(new Error('Only .mp4, .mov, and .mkv files are allowed!'));
   },
 });
 
 // POST /api/videos/upload
 router.post('/upload', authenticate, (req, res, next) => {
+  console.log(`[UPLOAD ROUTE] Starting upload for user: ${req.user.username}`);
   upload.single('video')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
+      console.error(`[UPLOAD ROUTE] Multer Error: ${err.message}`, err);
       return res.status(400).json({ error: `Multer error: ${err.message}` });
     } else if (err) {
+      console.error(`[UPLOAD ROUTE] Error: ${err.message}`);
       return res.status(400).json({ error: err.message });
     }
+    console.log(`[UPLOAD ROUTE] File received: ${req.file ? req.file.path : 'None'}`);
     next();
   });
 }, async (req, res) => {
