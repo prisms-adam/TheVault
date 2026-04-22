@@ -79,9 +79,12 @@ cleanup() {
 # Trap Ctrl+C and other termination signals
 trap cleanup SIGINT SIGTERM
 
-# 4. Start services
+# 4. Build and Start services
 echo -e "${GREEN}📦 Building Frontend for production...${NC}"
-(cd "$FRONTEND_DIR" && npm install --silent && npm run build)
+if ! (cd "$FRONTEND_DIR" && npm install --silent && npm run build); then
+    echo -e "${RED}❌ Frontend build failed! Check for TypeScript errors above.${NC}"
+    exit 1
+fi
 
 echo -e "${GREEN}📡 Starting Backend (API & Frontend Host)...${NC}"
 npm run dev &

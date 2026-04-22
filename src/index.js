@@ -54,7 +54,7 @@ const frontendDist = path.join(__dirname, '../frontend/dist');
 app.use('/vault', express.static(frontendDist));
 
 // Fallback for SPA routing under /vault
-app.get('/vault/*', (req, res) => {
+app.get('/vault/:splat*', (req, res) => {
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
