@@ -128,12 +128,10 @@ async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
   fs.chmodSync(outputFolder, 0o755);
 
   const args = [
-  '-hwaccel', 'cuda',
-  '-hwaccel_output_format', 'cuda',
-  '-i', input,
   '-y',
+  '-i', input,
   '-c:v', 'h264_nvenc',
-  '-vf', `scale_cuda=w=${resolution.split(':')[0]}:h=${resolution.split(':')[1]},format=yuv420p`,
+  '-vf', `scale=w=${resolution.split(':')[0]}:h=${resolution.split(':')[1]},format=yuv420p`,
   '-b:v', bitrate,
   '-preset', 'p7',
   '-tune', 'hq',
