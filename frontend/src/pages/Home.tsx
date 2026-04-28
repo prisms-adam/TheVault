@@ -86,7 +86,7 @@ const Home = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-onyx/90 via-onyx/20 to-transparent" />
             
             {video.isNew && (
-              <div className="absolute top-0 left-0 -rotate-45 -translate-x-1/2 translate-y-1/2 px-10 py-1 bg-yellow-400 text-black text-[10px] font-black uppercase tracking-widest z-10 shadow-lg">
+              <div className="absolute top-2 -left-8 -rotate-45 px-10 py-1 bg-yellow-400 text-black text-[10px] font-black uppercase tracking-widest z-10 shadow-lg">
                 New!
               </div>
             )}
