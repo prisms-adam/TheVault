@@ -120,15 +120,32 @@ async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
 
   return new Promise((resolve, reject) => {
     ffmpeg(input)
+      .inputOptions([
+        '-hwaccel auto',
+        '-hwaccel_output_format cuda'
+      ])
+      .videoCodec('h264_nvenc')
       .size(resolution)
       .videoBitrate(bitrate)
-      .addOption('-hls_time', 10)
-      .addOption('-hls_list_size', 0)
-      .addOption('-hls_segment_filename', path.join(outputFolder, 'seg_%03d.ts'))
+      .outputOptions([
+        '-preset p7',       // Highest quality NVENC preset
+        '-tune hq',         // High quality tuning
+        '-rc vbr',          // Variable bitrate control
+        '-cq 20',           // Constant quality factor
+        '-hls_time 10',
+        '-hls_list_size 0',
+        '-hls_segment_filename', path.join(outputFolder, 'seg_%03d.ts')
+      ])
       .format('hls')
       .save(path.join(outputFolder, 'playlist.m3u8'))
+      .on('start', (commandLine) => {
+        console.log(`[NVENC] Spawned FFmpeg with command: ${commandLine}`);
+      })
       .on('end', resolve)
-      .on('error', reject);
+      .on('error', (err) => {
+        console.error(`[NVENC ERROR]: ${err.message}`);
+        reject(err);
+      });
   });
 }
 

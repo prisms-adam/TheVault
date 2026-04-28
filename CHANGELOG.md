@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [1.5.0] - 2026-04-28
 
 ### Added
+- **NVIDIA GPU Acceleration:**
+  - Integrated NVIDIA NVENC (`h264_nvenc`) for hardware-accelerated video transcoding.
+  - Added `-hwaccel auto` and `-hwaccel_output_format cuda` for high-speed input decoding.
+  - Optimized for high-end GPUs (RTX 5090) using `p7` high-quality presets and `hq` tuning.
 - **High-Bitrate Support:**
   - Increased file upload limit to 5GB (backend and frontend).
   - Added frontend file size validation and error reporting in Admin Console.
