@@ -10,6 +10,7 @@ interface Video {
   technicalMetadata: string;
   createdAt: string;
   isFeatured: boolean;
+  isNew: boolean;
   tags: string;
   views: number;
   likes: number;
@@ -83,6 +84,12 @@ const Home = () => {
               }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-onyx/90 via-onyx/20 to-transparent" />
+            
+            {video.isNew && (
+              <div className="absolute top-0 left-0 -rotate-45 -translate-x-1/2 translate-y-1/2 px-10 py-1 bg-yellow-400 text-black text-[10px] font-black uppercase tracking-widest z-10 shadow-lg">
+                New!
+              </div>
+            )}
             
             <div className="absolute top-3 right-3 flex gap-2">
               <span className="text-[10px] font-black bg-record px-2 py-0.5 rounded tracking-tighter uppercase">HLS</span>

@@ -28,6 +28,7 @@ model Video {
   thumbnailPath     String?
   originalPath      String?    // Original uploaded file path
   isFeatured        Boolean    @default(false)
+  isNew             Boolean    @default(false)
   technicalMetadata String?    // JSON string for codec, resolution, etc.
   tags              String     @default("")
   views             Int        @default(0)

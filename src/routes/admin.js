@@ -25,11 +25,11 @@ const { getUploadDir } = require('../config');
 
 // PATCH /api/admin/videos/:id - Update status/pinning/metadata
 router.patch('/videos/:id', async (req, res) => {
-  const { status, isFeatured, title, description, tags } = req.body;
+  const { status, isFeatured, isNew, title, description, tags } = req.body;
   try {
     const updated = await prisma.video.update({
       where: { id: req.params.id },
-      data: { status, isFeatured, title, description, tags }
+      data: { status, isFeatured, isNew, title, description, tags }
     });
     res.json(updated);
   } catch (error) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
-import { Upload, Loader2, Trash2, Pin, User as UserIcon, Hash, Plus, RotateCcw } from 'lucide-react';
+import { Upload, Loader2, Trash2, Pin, User as UserIcon, Hash, Plus, RotateCcw, Sparkles } from 'lucide-react';
 
 const Admin = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -362,6 +362,9 @@ const Admin = () => {
                   </button>
                   <button onClick={() => updateVideo(v.id, { isFeatured: !v.isFeatured })} className={`p-2 rounded-lg transition-all ${v.isFeatured ? 'bg-record text-white shadow-[0_0_10px_rgba(190,18,60,0.5)]' : 'glass text-slate-400'}`}>
                     <Pin size={14} />
+                  </button>
+                  <button onClick={() => updateVideo(v.id, { isNew: !v.isNew })} className={`p-2 rounded-lg transition-all ${v.isNew ? 'bg-yellow-500 text-black shadow-[0_0_10px_rgba(234,179,8,0.5)]' : 'glass text-slate-400'}`}>
+                    <Sparkles size={14} />
                   </button>
                   <button onClick={() => deleteVideo(v.id)} className="p-2 glass rounded-lg text-slate-400 hover:bg-record hover:text-white transition-all">
                     <Trash2 size={14} />
