@@ -128,24 +128,23 @@ async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
   fs.chmodSync(outputFolder, 0o755);
 
   const args = [
-    '-hwaccel', 'cuda',
-    '-hwaccel_output_format', 'cuda',
-    '-i', input,
-    '-y',
-    '-c:v', 'h264_nvenc',
-    '-vf', `scale_cuda=${resolution},format=yuv420p`,
-    '-b:v', bitrate,
-    '-preset', 'p7',
-    '-tune', 'hq',
-    '-rc', 'vbr',
-    '-cq', '20',
-    '-f', 'hls',
-    '-hls_time', '10',
-    '-hls_list_size', '0',
-    '-hls_segment_filename', path.join(outputFolder, 'seg_%03d.ts'),
-    path.join(outputFolder, 'playlist.m3u8')
+  '-hwaccel', 'cuda',
+  '-hwaccel_output_format', 'cuda',
+  '-i', input,
+  '-y',
+  '-c:v', 'h264_nvenc',
+  '-vf', `scale_cuda=w=${resolution.split(':')[0]}:h=${resolution.split(':')[1]},format=yuv420p`,
+  '-b:v', bitrate,
+  '-preset', 'p7',
+  '-tune', 'hq',
+  '-rc', 'vbr',
+  '-cq', '20',
+  '-f', 'hls',
+  '-hls_time', '10',
+  '-hls_list_size', '0',
+  '-hls_segment_filename', path.join(outputFolder, 'seg_%03d.ts'),
+  path.join(outputFolder, 'playlist.m3u8')
   ];
-
   return new Promise((resolve, reject) => {
     console.log(`[NVENC EXEC]: ffmpeg ${args.join(' ')}`);
     const proc = spawn('/usr/bin/ffmpeg', args);
