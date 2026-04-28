@@ -84,9 +84,14 @@ app.get('/', (req, res) => {
   res.redirect('/vault');
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`The Vault Studio Console running on http://0.0.0.0:${PORT}`);
 });
+
+// Increase timeout for large file uploads (1 hour)
+server.timeout = 3600000;
+server.keepAliveTimeout = 3600000;
+server.headersTimeout = 3601000;
 
 // Global Error Handler
 app.use((err, req, res, next) => {

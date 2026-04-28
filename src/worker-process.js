@@ -95,6 +95,12 @@ const worker = new Worker('video-processing', async (job) => {
       },
     });
 
+    // 5. Cleanup temp file
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`Deleted temp file: ${filePath}`);
+    }
+
     console.log(`Finished processing video: ${videoId}`);
 
   } catch (error) {

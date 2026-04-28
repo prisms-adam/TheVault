@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-04-28
+
+### Added
+- **High-Bitrate Support:**
+  - Increased file upload limit to 5GB (backend and frontend).
+  - Added frontend file size validation and error reporting in Admin Console.
+  - Implemented manual Quality Selector (1080p, 720p, Auto) in the Video Player.
+- **Storage Optimization:**
+  - Automatic cleanup of original high-bitrate source files after transcoding completion.
+
+### Fixed
+- **Upload Reliability:**
+  - Increased server timeouts (1 hour) to prevent cancellation of large file transfers over LAN.
+
 ## [1.4.0] - 2026-04-22
 
 ### Fixed

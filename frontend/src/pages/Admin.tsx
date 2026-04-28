@@ -8,6 +8,7 @@ const Admin = () => {
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   
   const [videos, setVideos] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -48,6 +49,13 @@ const Admin = () => {
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
+
+    setError(null);
+    const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`File is too large (${(file.size / (1024 * 1024 * 1024)).toFixed(2)}GB). Max limit is 5GB.`);
+      return;
+    }
 
     setStatus('uploading');
     setUploadProgress(0);
@@ -214,10 +222,16 @@ const Admin = () => {
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Session details..." className="w-full bg-onyx/50 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-record transition-all outline-none resize-none" />
               </div>
               <div className="relative group">
-                <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                <div className="border-2 border-dashed border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center group-hover:border-record/30 transition-all bg-white/[0.02]">
-                  <Upload className="text-slate-600 mb-4 group-hover:text-record transition-colors" />
-                  <span className="text-xs font-black uppercase tracking-widest text-slate-400">{file ? file.name : "Select High-Bitrate Master"}</span>
+                <input type="file" onChange={(e) => {
+                  setFile(e.target.files?.[0] || null);
+                  setError(null);
+                }} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                <div className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all bg-white/[0.02] ${error ? 'border-record/50 bg-record/5' : 'border-white/10 group-hover:border-record/30'}`}>
+                  <Upload className={`${error ? 'text-record' : 'text-slate-600'} mb-4 group-hover:text-record transition-colors`} />
+                  <span className={`text-xs font-black uppercase tracking-widest ${error ? 'text-record' : 'text-slate-400'}`}>
+                    {file ? file.name : "Select High-Bitrate Master (Max 5GB)"}
+                  </span>
+                  {error && <span className="text-[10px] font-bold text-record mt-2 uppercase tracking-tighter">{error}</span>}
                 </div>
               </div>
               <button 
