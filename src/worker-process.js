@@ -70,10 +70,16 @@ const worker = new Worker('video-processing', async (job) => {
     // 3. Transcode to HLS (Multi-bitrate)
     const masterPlaylistPath = path.join(outputDir, 'master.m3u8');
     
-    // 720p
-    await transcodeToHLS(filePath, path.join(outputDir, '720p'), '1280x720', '2500k');
-    // 1080p
-    await transcodeToHLS(filePath, path.join(outputDir, '1080p'), '1920x1080', '5000k');
+    console.log(`[WORKER] Starting parallel hardware-accelerated transcode for ${videoId}...`);
+    try {
+      await Promise.all([
+        transcodeToHLS(filePath, path.join(outputDir, '720p'), '1280:720', '2500k'),
+        transcodeToHLS(filePath, path.join(outputDir, '1080p'), '1920:1080', '5000k')
+      ]);
+    } catch (err) {
+      console.error("[PARALLEL TRANSCODE ERROR]:", err);
+      throw err;
+    }
 
     // Create Master Playlist
     const masterPlaylistContent = `#EXTM3U
@@ -141,19 +147,6 @@ async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
       ])
       .format('hls')
       .save(path.join(outputFolder, 'playlist.m3u8'))
-      .on('start', (commandLine) => {
-        console.log(`[NVENC] Spawned FFmpeg with command: ${commandLine}`);
-      })
-      .on('end', resolve)
-      .on('error', (err) => {
-        console.error(`[NVENC ERROR]: ${err.message}`);
-        reject(err);
-      });
-  });
-}
-
-console.log('Video worker started...');
-laylist.m3u8'))
       .on('start', (commandLine) => {
         console.log(`[NVENC] Spawned FFmpeg with command: ${commandLine}`);
       })
