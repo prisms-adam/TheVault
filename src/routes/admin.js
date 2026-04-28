@@ -214,4 +214,88 @@ router.delete('/categories/:id', async (req, res) => {
   res.json({ message: 'Category deleted' });
 });
 
+// Bug Reports Management
+router.get('/bugs', async (req, res) => {
+  try {
+    const { status } = req.query;
+    const query = {};
+    if (status && ['OPEN', 'CLOSED'].includes(status.toUpperCase())) {
+      query.status = status.toUpperCase();
+    }
+    const bugs = await prisma.bugReport.findMany({
+      where: query,
+      include: { fixedByUser: { select: { username: true } } },
+      orderBy: [
+        { status: 'asc' }, // OPEN first
+        { createdAt: 'desc' }
+      ]
+    });
+    res.json(bugs);
+  } catch (error) {
+    console.error('Get bugs error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/bugs', async (req, res) => {
+  const { title, description } = req.body;
+  if (!title || title.trim().length === 0) {
+    return res.status(400).json({ error: 'Title is required' });
+  }
+  try {
+    const bug = await prisma.bugReport.create({
+      data: { title: title.trim(), description: description?.trim() || null },
+      include: { fixedByUser: { select: { username: true } } }
+    });
+    res.status(201).json(bug);
+  } catch (error) {
+    console.error('Create bug error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.patch('/bugs/:id', async (req, res) => {
+  const { title, description, status } = req.body;
+  try {
+    const updateData = {};
+    if (title !== undefined) updateData.title = title.trim();
+    if (description !== undefined) updateData.description = description?.trim() || null;
+    if (status !== undefined) {
+      const newStatus = status.toUpperCase();
+      if (!['OPEN', 'CLOSED'].includes(newStatus)) {
+        return res.status(400).json({ error: 'Invalid status' });
+      }
+      updateData.status = newStatus;
+      // If marking as closed, record who and when
+      if (newStatus === 'CLOSED' && req.user?.id) {
+        updateData.fixedBy = req.user.id;
+        updateData.fixedAt = new Date();
+      } else if (newStatus === 'OPEN') {
+        // Reopening clears the fixed info
+        updateData.fixedBy = null;
+        updateData.fixedAt = null;
+      }
+    }
+    const bug = await prisma.bugReport.update({
+      where: { id: req.params.id },
+      data: updateData,
+      include: { fixedByUser: { select: { username: true } } }
+    });
+    res.json(bug);
+  } catch (error) {
+    console.error('Update bug error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.delete('/bugs/:id', async (req, res) => {
+  try {
+    await prisma.bugReport.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Bug report deleted' });
+  } catch (error) {
+    console.error('Delete bug error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

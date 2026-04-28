@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
-import { Upload, Loader2, Trash2, Pin, User as UserIcon, Hash, Plus, RotateCcw, Sparkles } from 'lucide-react';
+import { Upload, Loader2, Trash2, Pin, User as UserIcon, Hash, Plus, RotateCcw, Sparkles, Bug, CheckCircle2, Circle } from 'lucide-react';
 
 const Admin = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -15,7 +15,8 @@ const Admin = () => {
   const [comments, setComments] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [queue, setQueue] = useState<any>(null);
-  const [tab, setTab] = useState<'upload' | 'videos' | 'categories' | 'users' | 'comments'>('upload');
+  const [bugs, setBugs] = useState<any[]>([]);
+  const [tab, setTab] = useState<'upload' | 'videos' | 'categories' | 'users' | 'comments' | 'bugs'>('upload');
   
   // Video editing state
   const [editingVideo, setEditingVideo] = useState<string | null>(null);
@@ -23,18 +24,20 @@ const Admin = () => {
 
   const fetchData = async () => {
     try {
-      const [vRes, uRes, cRes, qRes, catRes] = await Promise.all([
+      const [vRes, uRes, cRes, qRes, catRes, bugsRes] = await Promise.all([
         api.get('/admin/videos'),
         api.get('/admin/users'),
         api.get('/admin/comments'),
         api.get('/admin/queue'),
-        api.get('/admin/categories')
+        api.get('/admin/categories'),
+        api.get('/admin/bugs')
       ]);
       setVideos(vRes.data);
       setUsers(uRes.data);
       setComments(cRes.data);
       setQueue(qRes.data);
       setCategories(catRes.data);
+      setBugs(bugsRes.data);
     } catch (err) {
       console.error("Failed to fetch admin data", err);
     }
@@ -187,6 +190,32 @@ const Admin = () => {
     fetchData();
   };
 
+  // Bug Report Management
+  const [newBugTitle, setNewBugTitle] = useState('');
+  const [newBugDesc, setNewBugDesc] = useState('');
+  const [showClosedBugs, setShowClosedBugs] = useState(false);
+
+  const addBug = async () => {
+    if (!newBugTitle.trim()) return;
+    await api.post('/admin/bugs', { title: newBugTitle, description: newBugDesc });
+    setNewBugTitle('');
+    setNewBugDesc('');
+    fetchData();
+  };
+
+  const toggleBugStatus = async (bug: any) => {
+    const newStatus = bug.status === 'OPEN' ? 'CLOSED' : 'OPEN';
+    await api.patch(`/admin/bugs/${bug.id}`, { status: newStatus });
+    fetchData();
+  };
+
+  const deleteBug = async (id: string) => {
+    if (window.confirm('Delete this bug report?')) {
+      await api.delete(`/admin/bugs/${id}`);
+      fetchData();
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-12">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -200,7 +229,8 @@ const Admin = () => {
             { id: 'videos', label: 'Videos' },
             { id: 'categories', label: 'Categories' },
             { id: 'users', label: 'Users' },
-            { id: 'comments', label: 'Comments' }
+            { id: 'comments', label: 'Comments' },
+            { id: 'bugs', label: 'Bug List' }
           ].map((t) => (
             <button
               key={t.id}
@@ -495,6 +525,134 @@ const Admin = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {tab === 'bugs' && (
+        <div className="space-y-8">
+          {/* Add New Bug */}
+          <section className="glass rounded-3xl p-8 border border-white/5">
+            <h3 className="text-slate-400 font-black uppercase text-xs tracking-[0.2em] mb-6 italic flex items-center gap-2">
+              <Plus size={14} /> Report New Bug
+            </h3>
+            <div className="space-y-4">
+              <input 
+                value={newBugTitle}
+                onChange={e => setNewBugTitle(e.target.value)}
+                placeholder="Bug title (required)"
+                className="w-full bg-onyx/50 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-record transition-all"
+              />
+              <textarea 
+                value={newBugDesc}
+                onChange={e => setNewBugDesc(e.target.value)}
+                placeholder="Detailed description (optional)"
+                rows={3}
+                className="w-full bg-onyx/50 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-record transition-all resize-none"
+              />
+              <button 
+                onClick={addBug}
+                disabled={!newBugTitle.trim()}
+                className="bg-record text-white font-black uppercase text-[10px] tracking-widest rounded-xl hover:shadow-[0_0_20px_rgba(190,18,60,0.3)] transition-all px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Submit Bug Report
+              </button>
+            </div>
+          </section>
+
+          {/* Open Bugs */}
+          <section className="glass rounded-3xl overflow-hidden border border-white/5">
+            <div className="bg-record/10 p-6 border-b border-record/20">
+              <h3 className="text-record font-black uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+                <Circle size={14} /> Open Bugs
+              </h3>
+            </div>
+            <div className="divide-y divide-white/5">
+              {bugs.filter(b => b.status === 'OPEN').length === 0 ? (
+                <div className="p-8 text-center text-slate-500 text-sm">No open bugs. Great job!</div>
+              ) : (
+                bugs.filter(b => b.status === 'OPEN').map(bug => (
+                  <div key={bug.id} className="p-6 hover:bg-white/[0.02] transition-colors">
+                    <div className="flex items-start gap-4">
+                      <button 
+                        onClick={() => toggleBugStatus(bug)}
+                        className="mt-1 p-1.5 rounded-lg bg-green-500/20 text-green-500 hover:bg-green-500/30 transition-all flex-shrink-0"
+                        title="Mark as fixed"
+                      >
+                        <CheckCircle2 size={18} />
+                      </button>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="font-bold text-sm">{bug.title}</span>
+                          <span className="text-[9px] font-black uppercase bg-record/20 text-record px-1.5 py-0.5 rounded">OPEN</span>
+                        </div>
+                        {bug.description && (
+                          <p className="text-xs text-slate-400 mt-1">{bug.description}</p>
+                        )}
+                        <div className="text-[9px] text-slate-600 uppercase mt-2">
+                          Created: {new Date(bug.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => deleteBug(bug.id)}
+                        className="p-2 glass rounded-lg text-slate-500 hover:bg-record hover:text-white transition-all"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          {/* Closed Bugs */}
+          <section className="glass rounded-3xl overflow-hidden border border-white/5">
+            <button 
+              onClick={() => setShowClosedBugs(!showClosedBugs)}
+              className="w-full bg-white/5 p-6 flex items-center justify-between hover:bg-white/10 transition-colors"
+            >
+              <h3 className="text-slate-400 font-black uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+                <CheckCircle2 size={14} /> Closed Bugs ({bugs.filter(b => b.status === 'CLOSED').length})
+              </h3>
+              <span className="text-slate-500 text-xs">{showClosedBugs ? '▲' : '▼'}</span>
+            </button>
+            {showClosedBugs && (
+              <div className="divide-y divide-white/5">
+                {bugs.filter(b => b.status === 'CLOSED').length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-sm">No closed bugs yet.</div>
+                ) : (
+                  bugs.filter(b => b.status === 'CLOSED').map(bug => (
+                    <div key={bug.id} className="p-6 hover:bg-white/[0.02] transition-colors opacity-75">
+                      <div className="flex items-start gap-4">
+                        <div className="mt-1 p-1.5 rounded-lg bg-green-500/20 text-green-500 flex-shrink-0">
+                          <CheckCircle2 size={18} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className="font-bold text-sm text-slate-300 line-through">{bug.title}</span>
+                            <span className="text-[9px] font-black uppercase bg-green-500/20 text-green-500 px-1.5 py-0.5 rounded">CLOSED</span>
+                          </div>
+                          {bug.description && (
+                            <p className="text-xs text-slate-500 mt-1">{bug.description}</p>
+                          )}
+                          <div className="flex items-center gap-4 text-[9px] text-slate-600 uppercase mt-2">
+                            <span>Fixed by: <span className="text-slate-400">{bug.fixedByUser?.username || 'Unknown'}</span></span>
+                            <span>On: {bug.fixedAt ? new Date(bug.fixedAt).toLocaleString() : 'N/A'}</span>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => deleteBug(bug.id)}
+                          className="p-2 glass rounded-lg text-slate-500 hover:bg-record hover:text-white transition-all"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </section>
         </div>
       )}
 
