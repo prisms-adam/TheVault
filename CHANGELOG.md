@@ -5,13 +5,18 @@ All notable changes to this project will be documented in this file.
 ## [1.5.0] - 2026-04-28
 
 ### Added
+- **Content & UX:**
+  - Added full Markdown support for video descriptions (using `react-markdown`).
+  - Implemented a "Retry Transcoding" button in the Admin Console for easy recovery of failed/stuck jobs.
 - **Maintenance & Recovery:**
   - Created `scripts/recover-failed.js` to automatically re-queue videos that failed during transcoding (leveraging new NVENC support).
+  - Improved recovery script robustness with absolute path resolution for environment and database.
   - Added automatic server timeout scaling for large asset transfers.
 - **NVIDIA GPU Acceleration:**
   - Integrated NVIDIA NVENC (`h264_nvenc`) for hardware-accelerated video transcoding.
+  - Implemented parallel transcoding for 1080p and 720p resolutions to maximize GPU throughput.
+  - Optimized pipeline with `scale_cuda` for zero-copy hardware scaling, significantly reducing CPU load.
   - Added automatic detection of system FFmpeg/FFprobe to enable hardware encoders not present in static builds.
-  - Added `-hwaccel auto` and `-hwaccel_output_format cuda` for high-speed input decoding.
   - Optimized for high-end GPUs (RTX 5090) using `p7` high-quality presets and `hq` tuning.
 - **High-Bitrate Support:**
   - Increased file upload limit to 5GB (backend and frontend).

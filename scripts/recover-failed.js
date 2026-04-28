@@ -1,7 +1,16 @@
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const { PrismaClient } = require('@prisma/client');
 const { Queue } = require('bullmq');
 const Redis = require('ioredis');
 const fs = require('fs');
+
+// Use the absolute path for the database if it's a relative SQLite path
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('file:.')) {
+  const dbPath = path.resolve(__dirname, '..', process.env.DATABASE_URL.replace('file:./', ''));
+  process.env.DATABASE_URL = `file:${dbPath}`;
+}
+
 const prisma = new PrismaClient();
 
 async function recover() {

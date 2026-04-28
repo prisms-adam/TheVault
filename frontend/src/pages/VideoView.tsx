@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import api from '../lib/api';
 import VideoPlayer from '../components/VideoPlayer';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { MessageSquare, Pin, Trash2, Send, Smile, Plus, ThumbsUp, ThumbsDown, Eye, Hash } from 'lucide-react';
 
 interface Video {
@@ -162,7 +164,15 @@ const VideoView = () => {
               </div>
             </div>
           </div>
-          <p className="text-slate-400 text-lg leading-relaxed glass p-6 rounded-2xl">{video.description || "No session metadata provided."}</p>
+          <div className="text-slate-400 text-lg leading-relaxed glass p-6 rounded-2xl prose prose-invert max-w-none">
+            {video.description ? (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {video.description}
+              </ReactMarkdown>
+            ) : (
+              "No session metadata provided."
+            )}
+          </div>
         </div>
       </div>
 

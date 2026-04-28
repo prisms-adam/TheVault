@@ -37,6 +37,35 @@ router.patch('/videos/:id', async (req, res) => {
   }
 });
 
+// POST /api/admin/videos/:id/retry - Re-queue for transcoding
+router.post('/videos/:id/retry', async (req, res) => {
+  try {
+    const video = await prisma.video.findUnique({ where: { id: req.params.id } });
+    if (!video) return res.status(404).json({ error: 'Video not found' });
+    if (!video.originalPath || !fs.existsSync(video.originalPath)) {
+      return res.status(400).json({ error: 'Original source file no longer exists. Recovery impossible.' });
+    }
+
+    // Set back to PROCESSING
+    await prisma.video.update({
+      where: { id: video.id },
+      data: { status: 'PROCESSING' }
+    });
+
+    // Add to queue
+    await videoQueue.add('process-video', {
+      videoId: video.id,
+      filePath: video.originalPath,
+      originalName: video.title,
+    });
+
+    res.json({ message: 'Video re-queued for transcoding' });
+  } catch (error) {
+    console.error('Retry error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // DELETE /api/admin/videos/:id - Permanent deletion
 router.delete('/videos/:id', async (req, res) => {
   try {
