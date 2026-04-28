@@ -121,41 +121,36 @@ const worker = new Worker('video-processing', async (job) => {
     throw error;
   }
 }, { connection });
+const { spawn } = require('child_process');
+
 async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
-  // Ensure the parent directory exists and is writable
-  const parentDir = path.dirname(outputFolder);
-  if (!fs.existsSync(parentDir)) fs.mkdirSync(parentDir, { recursive: true });
   if (!fs.existsSync(outputFolder)) fs.mkdirSync(outputFolder, { recursive: true });
-  fs.chmodSync(parentDir, 0o755);
   fs.chmodSync(outputFolder, 0o755);
 
+  const args = [
+    '-hwaccel', 'cuda',
+    '-hwaccel_output_format', 'cuda',
+    '-i', input,
+    '-y',
+    '-c:v', 'h264_nvenc',
+    '-vf', `scale_cuda=${resolution},format=yuv420p`,
+    '-b:v', bitrate,
+    '-preset', 'p7',
+    '-tune', 'hq',
+    '-rc', 'vbr',
+    '-cq', '20',
+    '-f', 'hls',
+    '-hls_time', '10',
+    '-hls_list_size', '0',
+    '-hls_segment_filename', path.join(outputFolder, 'seg_%03d.ts'),
+    path.join(outputFolder, 'playlist.m3u8')
+  ];
+
   return new Promise((resolve, reject) => {
-    ffmpeg(input)
-      .inputOptions([
-        '-hwaccel cuda',
-        '-hwaccel_output_format cuda'
-      ])
-      .videoCodec('h264_nvenc')
-      .videoFilters(`scale_cuda=${resolution},format=yuv420p`)
-      .videoBitrate(bitrate)
-      .outputOptions([
-        '-preset p7',
-        '-tune hq',
-        '-rc vbr',
-        '-cq 20',
-        '-f hls',
-        '-hls_time 10',
-        '-hls_list_size 0',
-        '-hls_segment_filename', path.join(outputFolder, 'seg_%03d.ts')
-      ])
-      .output(path.join(outputFolder, 'playlist.m3u8'))
-      .on('start', (cmd) => console.log(`[NVENC COMMAND]: ${cmd}`))
-      .on('end', resolve)
-      .on('error', (err) => {
-        console.error(`[NVENC ERROR]: ${err.message}`);
-        reject(err);
-      })
-      .run();
+    console.log(`[NVENC EXEC]: ffmpeg ${args.join(' ')}`);
+    const proc = spawn('/usr/bin/ffmpeg', args);
+    proc.stderr.on('data', (data) => console.log(`[FFMPEG]: ${data}`));
+    proc.on('close', (code) => code === 0 ? resolve() : reject(new Error(`FFmpeg exited with ${code}`)));
   });
 }
 
