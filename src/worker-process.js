@@ -121,7 +121,6 @@ const worker = new Worker('video-processing', async (job) => {
     throw error;
   }
 }, { connection });
-
 async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
   if (!fs.existsSync(outputFolder)) {
     fs.mkdirSync(outputFolder, { recursive: true });
@@ -131,12 +130,14 @@ async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
 
   return new Promise((resolve, reject) => {
     ffmpeg(input)
-      .outputOptions([
+      .inputOptions([
         '-hwaccel cuda',
-        '-hwaccel_output_format cuda',
-        '-c:v h264_nvenc',
-        `-vf scale_cuda=${resolution},format=yuv420p`,
-        `-b:v ${bitrate}`,
+        '-hwaccel_output_format cuda'
+      ])
+      .videoCodec('h264_nvenc')
+      .videoFilters(`scale_cuda=${resolution},format=yuv420p`)
+      .videoBitrate(bitrate)
+      .outputOptions([
         '-preset p7',
         '-tune hq',
         '-rc vbr',
