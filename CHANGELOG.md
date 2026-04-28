@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [1.5.0] - 2026-04-28
 
 ### Added
+- **Maintenance & Recovery:**
+  - Created `scripts/recover-failed.js` to automatically re-queue videos that failed during transcoding (leveraging new NVENC support).
+  - Added automatic server timeout scaling for large asset transfers.
 - **NVIDIA GPU Acceleration:**
   - Integrated NVIDIA NVENC (`h264_nvenc`) for hardware-accelerated video transcoding.
   - Added automatic detection of system FFmpeg/FFprobe to enable hardware encoders not present in static builds.
