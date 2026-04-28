@@ -150,6 +150,7 @@ async function transcodeToHLS(input, outputFolder, resolutions) {
     '-y',
     '-i', input,
     '-filter_complex', filterComplex,
+    '-map', '0:a?',  // Map audio stream if present
   ];
 
   resolutions.forEach((r, i) => {
@@ -157,10 +158,14 @@ async function transcodeToHLS(input, outputFolder, resolutions) {
       '-map', `[v${i}]`,
       '-c:v', 'h264_nvenc',
       '-b:v', r.bitrate,
-      '-preset', 'p7',
+      '-preset', 'p3',
       '-tune', 'hq',
       '-rc', 'vbr',
-      '-cq', '20',
+      '-cq', '23',
+      '-b_ref_mode', 'middle',
+      '-c:a', 'aac',
+      '-b:a', '128k',
+      '-ac', '2',
       '-f', 'hls',
       '-hls_time', '10',
       '-hls_list_size', '0',
