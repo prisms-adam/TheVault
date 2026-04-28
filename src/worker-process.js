@@ -126,6 +126,8 @@ async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
   if (!fs.existsSync(outputFolder)) {
     fs.mkdirSync(outputFolder, { recursive: true });
   }
+  // Ensure directory is writable
+  fs.chmodSync(outputFolder, 0o755);
 
   return new Promise((resolve, reject) => {
     ffmpeg(input)
@@ -134,7 +136,7 @@ async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
         '-hwaccel_output_format cuda'
       ])
       .videoCodec('h264_nvenc')
-      .videoFilters(`scale_cuda=${resolution}`)
+      .videoFilters(`scale_cuda=${resolution},format=yuv420p`)
       .videoBitrate(bitrate)
       .outputOptions([
         '-preset p7',
