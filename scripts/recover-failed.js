@@ -12,13 +12,18 @@ async function recover() {
   });
   const videoQueue = new Queue('video-processing', { connection });
 
-  console.log("🔍 Searching for failed transcode jobs...");
+  console.log("🔍 Searching for failed or stuck transcode jobs...");
   const failedVideos = await prisma.video.findMany({
-    where: { status: 'ERROR' }
+    where: { 
+      OR: [
+        { status: 'ERROR' },
+        { status: 'PROCESSING' }
+      ]
+    }
   });
 
   if (failedVideos.length === 0) {
-    console.log("✅ No failed videos found.");
+    console.log("✅ No failed or stuck videos found.");
     await prisma.$disconnect();
     await connection.quit();
     return;
