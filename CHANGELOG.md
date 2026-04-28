@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **NVIDIA GPU Acceleration:**
   - Integrated NVIDIA NVENC (`h264_nvenc`) for hardware-accelerated video transcoding.
+  - Added automatic detection of system FFmpeg/FFprobe to enable hardware encoders not present in static builds.
   - Added `-hwaccel auto` and `-hwaccel_output_format cuda` for high-speed input decoding.
   - Optimized for high-end GPUs (RTX 5090) using `p7` high-quality presets and `hq` tuning.
 - **High-Bitrate Support:**

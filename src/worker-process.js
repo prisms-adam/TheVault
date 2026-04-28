@@ -1,8 +1,8 @@
 const { Worker } = require('bullmq');
 const Redis = require('ioredis');
 const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
-const ffprobePath = require('ffprobe-static').path;
+const ffmpegPath = fs.existsSync('/usr/bin/ffmpeg') ? '/usr/bin/ffmpeg' : require('ffmpeg-static');
+const ffprobePath = fs.existsSync('/usr/bin/ffprobe') ? '/usr/bin/ffprobe' : require('ffprobe-static').path;
 const fs = require('fs');
 const path = require('path');
 const prisma = require('./db');
