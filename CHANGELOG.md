@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2026-04-28
+
+### Added
+- **Admin & Developer Tools:**
+  - Implemented Bug List tracking system in Admin Console for developer todo management.
+  - Added bug report creation with title and description fields.
+  - Created open/closed bug sections with checkbox toggle to mark bugs as fixed.
+  - Tracks audit trail: username of admin who fixed each bug and timestamp.
+  - Collapsible closed bugs section showing historical fixes.
+- **GPU Transcoding Optimization:**
+  - Optimized NVENC encoder settings for RTX 5090 (preset p3, CQ 23).
+  - Added B-frame support with `-b_ref_mode middle` for 15-20% better compression.
+  - Enabled AAC audio transcoding (128k stereo) - previously missing from output.
+  - Expected GPU utilization increase: 2% → 40-60%, transcode speed: 2x → 8-15x realtime.
+
+### Fixed
+- **NEW! Badge Display:**
+  - Fixed diagonal "New!" banner positioning that showed only "W!" instead of full text.
+  - Removed conflicting translate transforms on rotated badge element.
+- **Sort Dropdown Collapse:**
+  - Fixed sort menu collapsing when hovering over options.
+  - Changed from hover-based to click-based toggle for reliable selection.
+- **HLS Transcoding Directory Creation:**
+  - Fixed "No such file or directory" error when writing HLS segments.
+  - Added automatic creation of resolution subdirectories (720p/, 1080p/) before transcoding.
+- **Database Schema Sync:**
+  - Restored missing `isNew` field to Video model after migration drift.
+
 ## [1.5.0] - 2026-04-28
 
 ### Added
