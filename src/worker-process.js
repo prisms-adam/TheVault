@@ -131,32 +131,29 @@ async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
 
   return new Promise((resolve, reject) => {
     ffmpeg(input)
-      .inputOptions([
-        '-hwaccel cuda',
-        '-hwaccel_output_format cuda'
-      ])
-      .videoCodec('h264_nvenc')
-      .videoFilters(`scale_cuda=${resolution},format=yuv420p`)
-      .videoBitrate(bitrate)
       .outputOptions([
+        '-hwaccel cuda',
+        '-hwaccel_output_format cuda',
+        '-c:v h264_nvenc',
+        `-vf scale_cuda=${resolution},format=yuv420p`,
+        `-b:v ${bitrate}`,
         '-preset p7',
         '-tune hq',
         '-rc vbr',
         '-cq 20',
         '-hls_time 10',
         '-hls_list_size 0',
-        '-hls_segment_filename', path.join(outputFolder, 'seg_%03d.ts')
+        `-hls_segment_filename ${path.join(outputFolder, 'seg_%03d.ts')}`
       ])
+      .output(path.join(outputFolder, 'playlist.m3u8'))
       .format('hls')
-      .save(path.join(outputFolder, 'playlist.m3u8'))
-      .on('start', (commandLine) => {
-        console.log(`[NVENC] Spawned FFmpeg with command: ${commandLine}`);
-      })
+      .on('start', (cmd) => console.log(`[NVENC COMMAND]: ${cmd}`))
       .on('end', resolve)
       .on('error', (err) => {
         console.error(`[NVENC ERROR]: ${err.message}`);
         reject(err);
-      });
+      })
+      .run();
   });
 }
 
