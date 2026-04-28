@@ -110,30 +110,42 @@ const Home = () => {
     </div>
   );
 
-  const SortDropdown = ({ categoryId }: { categoryId: string }) => (
-    <div className="relative group/sort">
-      <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors">
-        Sort By: {sortOptions[categoryId] || 'Date'} <ChevronDown size={12} />
-      </button>
-      <div className="absolute right-0 mt-2 w-40 glass rounded-xl border border-white/10 hidden group-hover/sort:block z-50 overflow-hidden shadow-2xl">
-        {[
-          { id: 'date', label: 'Upload Date', icon: Clock },
-          { id: 'name', label: 'Name', icon: Type },
-          { id: 'length', label: 'Length', icon: Clock },
-          { id: 'likes', label: 'Likes', icon: ThumbsUp },
-          { id: 'views', label: 'Views', icon: Eye },
-        ].map(opt => (
-          <button
-            key={opt.id}
-            onClick={() => setSortOptions({ ...sortOptions, [categoryId]: opt.id as SortOption })}
-            className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-record hover:text-white transition-colors flex items-center gap-3"
-          >
-            <opt.icon size={12} /> {opt.label}
-          </button>
-        ))}
+  const SortDropdown = ({ categoryId }: { categoryId: string }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    
+    return (
+      <div className="relative">
+        <button 
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
+        >
+          Sort By: {sortOptions[categoryId] || 'Date'} <ChevronDown size={12} />
+        </button>
+        {isOpen && (
+          <div className="absolute right-0 mt-2 w-40 glass rounded-xl border border-white/10 z-50 overflow-hidden shadow-2xl">
+            {[
+              { id: 'date', label: 'Upload Date', icon: Clock },
+              { id: 'name', label: 'Name', icon: Type },
+              { id: 'length', label: 'Length', icon: Clock },
+              { id: 'likes', label: 'Likes', icon: ThumbsUp },
+              { id: 'views', label: 'Views', icon: Eye },
+            ].map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => {
+                  setSortOptions({ ...sortOptions, [categoryId]: opt.id as SortOption });
+                  setIsOpen(false);
+                }}
+                className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-record hover:text-white transition-colors flex items-center gap-3"
+              >
+                <opt.icon size={12} /> {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   // Group videos by categories
   const uncategorized = videos.filter(v => !categories.some(c => v.tags.toLowerCase().includes(c.tagQuery.toLowerCase())));
