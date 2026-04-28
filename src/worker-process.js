@@ -122,10 +122,11 @@ const worker = new Worker('video-processing', async (job) => {
   }
 }, { connection });
 async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
-  if (!fs.existsSync(outputFolder)) {
-    fs.mkdirSync(outputFolder, { recursive: true });
-  }
-  // Ensure directory is writable
+  // Ensure the parent directory exists and is writable
+  const parentDir = path.dirname(outputFolder);
+  if (!fs.existsSync(parentDir)) fs.mkdirSync(parentDir, { recursive: true });
+  if (!fs.existsSync(outputFolder)) fs.mkdirSync(outputFolder, { recursive: true });
+  fs.chmodSync(parentDir, 0o755);
   fs.chmodSync(outputFolder, 0o755);
 
   return new Promise((resolve, reject) => {
@@ -142,12 +143,12 @@ async function transcodeToHLS(input, outputFolder, resolution, bitrate) {
         '-tune hq',
         '-rc vbr',
         '-cq 20',
+        '-f hls',
         '-hls_time 10',
         '-hls_list_size 0',
-        `-hls_segment_filename ${path.join(outputFolder, 'seg_%03d.ts')}`
+        '-hls_segment_filename', path.join(outputFolder, 'seg_%03d.ts')
       ])
       .output(path.join(outputFolder, 'playlist.m3u8'))
-      .format('hls')
       .on('start', (cmd) => console.log(`[NVENC COMMAND]: ${cmd}`))
       .on('end', resolve)
       .on('error', (err) => {
