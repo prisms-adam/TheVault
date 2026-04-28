@@ -29,6 +29,7 @@ model Video {
   thumbnailPath     String?
   originalPath      String?
   isFeatured        Boolean    @default(false)
+  isNew             Boolean    @default(false)
   technicalMetadata String?
   tags              String     @default("")
   views             Int        @default(0)
