@@ -136,6 +136,12 @@ async function transcodeToHLS(input, outputFolder, resolutions) {
   if (!fs.existsSync(outputFolder)) fs.mkdirSync(outputFolder, { recursive: true });
   fs.chmodSync(outputFolder, 0o755);
 
+  // Create resolution subdirectories (720p, 1080p, etc.)
+  resolutions.forEach(r => {
+    const resDir = path.join(outputFolder, `${r.res.split(':')[1]}p`);
+    if (!fs.existsSync(resDir)) fs.mkdirSync(resDir, { recursive: true });
+  });
+
   const filterComplex = resolutions.map((r, i) => 
     `[0:v]scale=${r.res},format=yuv420p[v${i}]`
   ).join(';');
