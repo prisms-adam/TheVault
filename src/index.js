@@ -9,12 +9,14 @@ const adminRoutes = require('./routes/admin');
 const commentRoutes = require('./routes/comments');
 const reactionRoutes = require('./routes/reactions');
 const voteRoutes = require('./routes/votes');
+const danmakuRoutes = require('./routes/danmaku');
 const prisma = require('./db');
 
 const { getUploadDir } = require('./config');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Request Logging
 app.use((req, res, next) => {
@@ -37,6 +39,7 @@ app.use('/vault/api/admin', adminRoutes);
 app.use('/vault/api/comments', commentRoutes);
 app.use('/vault/api/reactions', reactionRoutes);
 app.use('/vault/api/votes', voteRoutes);
+app.use('/vault/api/danmaku', danmakuRoutes);
 
 app.get('/vault/api/categories', async (req, res) => {
   const categories = await prisma.category.findMany({ orderBy: { order: 'asc' } });
@@ -84,8 +87,8 @@ app.get('/', (req, res) => {
   res.redirect('/vault');
 });
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`The Vault Studio Console running on http://0.0.0.0:${PORT}`);
+const server = app.listen(PORT, HOST, () => {
+  console.log(`The Vault Studio Console running on http://${HOST}:${PORT}/vault`);
 });
 
 // Increase timeout for large file uploads (1 hour)

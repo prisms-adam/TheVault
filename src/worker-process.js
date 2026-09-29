@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { Worker } = require('bullmq');
 const Redis = require('ioredis');
 const ffmpeg = require('fluent-ffmpeg');
@@ -13,15 +15,15 @@ ffmpeg.setFfprobePath(ffprobePath);
 console.log(`[WORKER] Using FFmpeg: ${ffmpegPath}`);
 console.log(`[WORKER] Using FFprobe: ${ffprobePath}`);
 
-const connection = new Redis({
-  host: process.env.REDIS_HOST || '127.0.0.1',
-  port: process.env.REDIS_PORT || 6379,
-  maxRetriesPerRequest: null,
-});
-
 const { getUploadDir } = require('./config');
 
 const startWorker = () => {
+  const connection = new Redis({
+    host: process.env.REDIS_HOST || '127.0.0.1',
+    port: process.env.REDIS_PORT || 6379,
+    maxRetriesPerRequest: null,
+  });
+
   const worker = new Worker('video-processing', async (job) => {
     const { videoId, filePath } = job.data;
     const baseUploadDir = await getUploadDir();
@@ -150,12 +152,12 @@ async function transcodeToHLS(input, outputFolder, resolutions) {
     '-y',
     '-i', input,
     '-filter_complex', filterComplex,
-    '-map', '0:a?',  // Map audio stream if present
   ];
 
   resolutions.forEach((r, i) => {
     args.push(
       '-map', `[v${i}]`,
+      '-map', '0:a?',
       '-c:v', 'h264_nvenc',
       '-b:v', r.bitrate,
       '-preset', 'p3',
@@ -176,12 +178,13 @@ async function transcodeToHLS(input, outputFolder, resolutions) {
 
   return new Promise((resolve, reject) => {
     console.log(`[NVENC EXEC]: ffmpeg ${args.join(' ')}`);
-    const proc = child_process.spawn('/usr/bin/ffmpeg', args);
+    const proc = child_process.spawn(ffmpegPath, args);
     proc.stderr.on('data', (data) => console.log(`[FFMPEG]: ${data}`));
+    proc.on('error', reject);
     proc.on('close', (code) => code === 0 ? resolve() : reject(new Error(`FFmpeg exited with ${code}`)));
   });
 }
 
-module.exports = { transcodeToHLS };
+module.exports = { transcodeToHLS, ffmpegPath };
 
 console.log('Video worker started...');

@@ -1,43 +1,62 @@
-const { expect } = require('chai');
-const sinon = require('sinon');
+const { EventEmitter } = require('events');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const child_process = require('child_process');
-const { transcodeToHLS } = require('../src/worker-process'); // Assuming refactor allows export
+const { transcodeToHLS, ffmpegPath } = require('../src/worker-process');
 
 describe('Transcoding Pipeline', () => {
   let spawnStub;
+  let tempDir;
 
   beforeEach(() => {
-    spawnStub = sinon.stub(child_process, 'spawn');
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'thevault-transcoding-'));
+    spawnStub = jest.spyOn(child_process, 'spawn');
   });
 
   afterEach(() => {
-    spawnStub.restore();
+    spawnStub.mockRestore();
+    fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('should spawn exactly one ffmpeg process for multiple resolutions', async () => {
-    // Mock successful process execution
-    const mockProc = {
-      stderr: { on: sinon.stub() },
-      on: sinon.stub()
-    };
-    
-    // Simulate 'close' event asynchronously
-    mockProc.on.withArgs('close').callsFake((event, callback) => {
-      setImmediate(() => callback(0));
+  function successfulProcess() {
+    const proc = new EventEmitter();
+    proc.stderr = new EventEmitter();
+    setImmediate(() => proc.emit('close', 0));
+    return proc;
+  }
+
+  it('uses the resolved FFmpeg executable for one two-rendition process', async () => {
+    spawnStub.mockImplementation(successfulProcess);
+    const resolutions = [
+      { res: '1280:720', bitrate: '2500k' },
+      { res: '1920:1080', bitrate: '5000k' }
+    ];
+
+    await transcodeToHLS('any-file.mp4', tempDir, resolutions);
+
+    expect(fs.existsSync(ffmpegPath)).toBe(true);
+    expect(spawnStub).toHaveBeenCalledTimes(1);
+    expect(spawnStub).toHaveBeenCalledWith(ffmpegPath, expect.any(Array));
+
+    const args = spawnStub.mock.calls[0][1];
+    expect(args.filter(arg => arg === '-i')).toHaveLength(1);
+    expect(args).toContain(path.join(tempDir, '720p', 'playlist.m3u8'));
+    expect(args).toContain(path.join(tempDir, '1080p', 'playlist.m3u8'));
+    expect(args.filter(arg => arg === 'h264_nvenc')).toHaveLength(2);
+    expect(args.filter(arg => arg === '0:a?')).toHaveLength(2);
+  });
+
+  it('rejects when the FFmpeg process cannot be spawned', async () => {
+    spawnStub.mockImplementation(() => {
+      const proc = new EventEmitter();
+      proc.stderr = new EventEmitter();
+      setImmediate(() => proc.emit('error', new Error('spawn failed')));
+      return proc;
     });
 
-    spawnStub.returns(mockProc);
-
-    const resolutions = [
-      { res: '1920:1080', bitrate: '5000k' },
+    await expect(transcodeToHLS('any-file.mp4', tempDir, [
       { res: '1280:720', bitrate: '2500k' }
-    ];
-    
-    await transcodeToHLS('any-file.mp4', 'output', resolutions);
-
-    expect(spawnStub.calledOnce).to.be.true;
-    const args = spawnStub.firstCall.args[1];
-    expect(args).to.include('-filter_complex');
-    expect(args.filter(arg => arg === '-i').length).to.equal(1);
+    ])).rejects.toThrow('spawn failed');
   });
 });

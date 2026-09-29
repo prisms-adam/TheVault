@@ -2,6 +2,8 @@
 
 The Vault is a high-performance, LAN-exclusive video repository designed to look and feel like a Professional Studio Console. It prioritizes technical metadata, high-bitrate playback, and granular administrative control for educational A/V environments.
 
+Windows local setup: [LOCAL_SETUP.md](LOCAL_SETUP.md). Chinese source and workflow guide: [PROJECT_GUIDE.zh-CN.md](PROJECT_GUIDE.zh-CN.md).
+
 ---
 
 ## Core Features
@@ -12,6 +14,7 @@ The Vault is a high-performance, LAN-exclusive video repository designed to look
 - **Adaptive Bitrate:** Automatic fallback from 1080p to 720p to ensure smooth streaming.
 - **Categorized Archive:** Grouped video sections managed via dynamic tags.
 - **Engagement Console:** Emoji reactions, comment feed, and like/dislike system.
+- **Danmaku / 弹幕:** Playback-synchronized scrolling, top, and bottom comments with colors, font sizes, opacity, and a visibility toggle. Logged-in viewers can send comments; authors and admins can delete them from the timestamped message list. Other viewers receive updates every ten seconds.
 
 ### The Engine (Backend)
 - **HLS Pipeline:** Background video transcoding using FFmpeg and BullMQ.
@@ -125,10 +128,12 @@ Use the included bash script for maintenance tasks:
 ---
 
 ## Automated Testing
-Verify the integrity of the system using the built-in TDD suite:
+Verify the integrity of the system using the built-in TDD suite. Set `NODE_ENV=test` and an explicit `DATABASE_URL` pointing to a separate SQLite file whose name contains `test`, then initialize it with `npx prisma db push` before running:
 ```bash
 npm test
 ```
+
+Never point tests at your live database: the existing suites delete fixture tables. The danmaku suite additionally refuses `dev.db` and requires a test database URL.
 
 ---
 The Vault – Preserving the next generation of visual storytellers.

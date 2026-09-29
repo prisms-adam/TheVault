@@ -15,6 +15,7 @@ model User {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   comments     Comment[]
+  danmakus     Danmaku[]
   reactions    Reaction[]
   votes        Vote[]
   fixedBugs    BugReport[]
@@ -38,6 +39,7 @@ model Video {
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
   comments          Comment[]
+  danmakus          Danmaku[]
   reactions         Reaction[]
   votes             Vote[]
 }
@@ -70,6 +72,22 @@ model Comment {
   updatedAt DateTime @updatedAt
   video     Video    @relation(fields: [videoId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model Danmaku {
+  id        String   @id @default(uuid())
+  text      String
+  time      Float
+  mode      String   @default("scroll")
+  color     String   @default("#FFFFFF")
+  size      Int      @default(24)
+  createdAt DateTime @default(now())
+  userId    String
+  videoId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@index([videoId, time])
 }
 
 model Reaction {

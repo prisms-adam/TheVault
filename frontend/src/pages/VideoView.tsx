@@ -86,8 +86,11 @@ const VideoView = () => {
     <div className="flex flex-col gap-8 max-w-5xl mx-auto">
       <div className="w-full">
         <VideoPlayer 
+          key={video.id}
           src={`/vault${video.hlsPath}`} 
           poster={`/vault${video.thumbnailPath}`} 
+          videoId={video.id}
+          user={user}
         />
         
         {/* Engagement Bar */}
