@@ -6,6 +6,16 @@ import EmojiPicker, { Theme } from 'emoji-picker-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MessageSquare, Pin, Trash2, Send, Smile, Plus, ThumbsUp, ThumbsDown, Eye, Hash } from 'lucide-react';
+import AuthorIdentity from '../components/AuthorIdentity';
+import type { ContentAuthor, UserIdentity } from '../lib/user';
+
+interface VideoComment {
+  id: string;
+  text: string;
+  createdAt: string;
+  isPinned: boolean;
+  user: ContentAuthor;
+}
 
 interface Video {
   id: string;
@@ -16,7 +26,7 @@ interface Video {
   tags: string;
   views: number;
   likes: number;
-  comments: any[];
+  comments: VideoComment[];
   reactions: { id: string, emoji: string, userId: string }[];
   votes: { userId: string, value: number }[];
 }
@@ -25,7 +35,7 @@ const VideoView = () => {
   const { id } = useParams();
   const [video, setVideo] = useState<Video | null>(null);
   const [commentText, setCommentText] = useState('');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserIdentity | null>(null);
   const [showPicker, setShowPicker] = useState(false);
 
   const fetchVideo = async () => {
@@ -35,7 +45,7 @@ const VideoView = () => {
 
   useEffect(() => {
     fetchVideo();
-    api.get('/auth/me').then((res: { data: { user: any } }) => setUser(res.data.user)).catch(() => {});
+    api.get('/auth/me').then((res: { data: { user: UserIdentity } }) => setUser(res.data.user)).catch(() => {});
   }, [id]);
 
   const addReaction = async (emoji: string) => {
@@ -186,12 +196,13 @@ const VideoView = () => {
         </h3>
         
         <div className="space-y-4 mb-6">
-          {sortedComments.map((c: any) => (
+          {sortedComments.map((c) => (
             <div key={c.id} className={`p-4 rounded-xl border ${c.isPinned ? 'bg-record/10 border-record/30' : 'bg-white/5 border-white/5'}`}>
               <div className="flex justify-between items-start mb-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  {c.user.username} {c.isPinned && <Pin size={10} className="inline ml-1 text-record" />}
-                </span>
+                <div className="flex min-w-0 flex-wrap items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <AuthorIdentity author={c.user} />
+                  {c.isPinned && <Pin size={10} className="text-record" aria-label="Pinned comment" />}
+                </div>
                 <div className="flex gap-2">
                   {user?.isAdmin && (
                     <>

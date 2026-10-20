@@ -70,9 +70,17 @@ BCBFDA1DDA027BEAEA4D616F8992F9B6353613C1B1F4D0E4A6776940BB036347
 
 本次 Chromium 验收通过：三种模式、暂停/拖动/重播/2 倍速、开关和透明度的刷新持久化、容器全屏、登录发送及刷新保留、纯文本显示、作者/管理员删除、第二个观众的轮询同步，以及 390px 窄屏控件布局。追加验收了加载失败恢复、80 个 emoji 的计数/限制，以及 720p/1080p/Auto 切换后继续播放，记录为 `.local/danmaku-edge-report.json`。桌面与窄屏截图为 `.local/danmaku-ready.png` 和 `.local/danmaku-mobile.png`；尚未在真实 iPhone 原生全屏播放器上验收。
 
+## 2026-10-13 学校 Google SSO
+
+学校登录代码与配置说明维护在 `codex/google-sso` 分支。配置步骤见 [GOOGLE_SSO_SETUP.zh-CN.md](GOOGLE_SSO_SETUP.zh-CN.md)。目前没有 OAuth Client ID/Secret，因此 Google 登录尚未启用，现有本地测试账号仍可使用。
+
+配置后只接受经过验证的 `@prismsus.org` Google 账号；Adam Kemp、Benjamin Zhao、Annie Ye 的指定邮箱在成功登录后获得管理员权限。普通学校账号可以评论和发弹幕，上传视频需要管理员权限。评论和弹幕列表显示学校姓名、邮箱及验证标记，旧本地作者显示 `Local`。
+
+本机数据库已通过增量 SQL 增加三个可空身份字段及唯一索引，备份为 `.local/pre-google-sso-20261013.db`；没有重置数据库。升级前后的 1 个账号、6 段视频、3 个分类和 9 条弹幕均保留。测试使用独立 `.local/google-sso-test-20261013.db`，6 个套件、64 项测试通过，日志见 `.local/logs/google-sso-all-tests.log`。前端构建及 SSO 相关文件的定向 lint 通过，浏览器 36 项检查通过（`.local/sso-browser-report.json`）。学校身份及已配置登录界面的浏览器检查使用响应模拟，真实 Google 登录仍需取得客户端凭据后验收。
+
 ## 每周 NEWS 使用流程
 
-1. 注册本地管理员并进入 Admin Console。
+1. 使用指定的学校管理员账号登录并进入 Admin Console；未配置 OAuth 的本机实例可继续使用现有 `vault_demo` 测试管理员。
 2. 在 **Categories** 创建分类，例如 Section Name 为 `Action News`，Tag Filter 为 `news`。此分类通常只需创建一次。
 3. 在 **Queue Monitor** 页的 **Source Ingestion** 填标题、描述并上传 `.mp4`、`.mov` 或 `.mkv`。代码设定单个文件最大 5 GB。
 4. 等待后台完成转码；视频状态从 `PROCESSING` 变为 `PUBLIC`。

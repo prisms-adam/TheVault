@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const prisma = require('../db');
 const { authenticate, authorizeAdmin } = require('../middleware/auth');
 const { videoQueue } = require('../queues');
+const { publicAuthorSelect, toPublicAuthor } = require('../auth/userDto');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -36,7 +37,7 @@ const upload = multer({
 });
 
 // POST /api/videos/upload
-router.post('/upload', authenticate, (req, res, next) => {
+router.post('/upload', authenticate, authorizeAdmin, (req, res, next) => {
   console.log(`[UPLOAD ROUTE] Starting upload for user: ${req.user.username}`);
   upload.single('video')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
@@ -109,7 +110,7 @@ router.get('/:id', async (req, res) => {
       data: { views: { increment: 1 } },
       include: {
         comments: {
-          include: { user: { select: { username: true } } },
+          include: { user: { select: publicAuthorSelect } },
           orderBy: { createdAt: 'desc' }
         },
         reactions: true,
@@ -121,6 +122,10 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Video not found' });
     }
     
+    video.comments = video.comments.map((comment) => ({
+      ...comment,
+      user: toPublicAuthor(comment.user),
+    }));
     res.json(video);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });

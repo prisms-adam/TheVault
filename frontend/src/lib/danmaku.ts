@@ -1,3 +1,5 @@
+import type { ContentAuthor, UserIdentity } from './user';
+
 export type DanmakuMode = 'scroll' | 'top' | 'bottom';
 
 export interface DanmakuItem {
@@ -10,14 +12,10 @@ export interface DanmakuItem {
   createdAt: string;
   userId: string;
   videoId: string;
-  user: { username: string };
+  user: ContentAuthor;
 }
 
-export interface DanmakuUser {
-  id: string;
-  username: string;
-  isAdmin: boolean;
-}
+export type DanmakuUser = UserIdentity;
 
 export interface DanmakuPreferences {
   visible: boolean;

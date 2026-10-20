@@ -1,6 +1,19 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { Upload, Loader2, Trash2, Pin, User as UserIcon, Hash, Plus, RotateCcw, Sparkles, CheckCircle2, Circle } from 'lucide-react';
+import AuthorIdentity from '../components/AuthorIdentity';
+import type { ContentAuthor, UserIdentity } from '../lib/user';
+
+interface AdminUser extends UserIdentity {
+  createdAt: string;
+}
+
+interface AdminComment {
+  id: string;
+  text: string;
+  user: ContentAuthor;
+  video: { title: string };
+}
 
 const Admin = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -11,8 +24,8 @@ const Admin = () => {
   const [error, setError] = useState<string | null>(null);
   
   const [videos, setVideos] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [comments, setComments] = useState<any[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [comments, setComments] = useState<AdminComment[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [queue, setQueue] = useState<any>(null);
   const [bugs, setBugs] = useState<any[]>([]);
@@ -111,7 +124,8 @@ const Admin = () => {
   const [resetPasswordUser, setResetPasswordUser] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
 
-  const startEditingUser = (user: any) => {
+  const startEditingUser = (user: AdminUser) => {
+    if (user.isSchoolAccount) return;
     setEditingUser(user.id);
     setUserEditData({ username: user.username });
   };
@@ -477,7 +491,7 @@ const Admin = () => {
                   <td className="p-6">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0"><UserIcon size={16} /></div>
-                      {editingUser === u.id ? (
+                      {editingUser === u.id && !u.isSchoolAccount ? (
                         <div className="flex gap-2">
                           <input 
                             value={userEditData.username}
@@ -488,13 +502,15 @@ const Admin = () => {
                           <button onClick={() => setEditingUser(null)} className="text-[10px] text-slate-500 font-black">Cancel</button>
                         </div>
                       ) : (
-                        <span className="font-bold">{u.username}</span>
+                        <AuthorIdentity author={u} className="flex-wrap font-bold" />
                       )}
                     </div>
                   </td>
                   <td className="p-6 text-xs text-slate-500">{new Date(u.createdAt).toLocaleDateString()}</td>
                   <td className="p-6">
-                    {resetPasswordUser === u.id ? (
+                    {u.isSchoolAccount ? (
+                      <span className="text-[10px] font-black uppercase tracking-widest text-sky-400">Managed by Google</span>
+                    ) : resetPasswordUser === u.id ? (
                       <div className="flex gap-2">
                         <input 
                           type="password"
@@ -514,9 +530,11 @@ const Admin = () => {
                     <button onClick={() => toggleAdmin(u.id, !u.isAdmin)} className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${u.isAdmin ? 'bg-record text-white' : 'glass text-slate-400 hover:text-white'}`}>
                       {u.isAdmin ? 'Admin' : 'Student'}
                     </button>
-                    <button onClick={() => startEditingUser(u)} className="text-slate-500 hover:text-white transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
-                    </button>
+                    {!u.isSchoolAccount && (
+                      <button onClick={() => startEditingUser(u)} className="text-slate-500 hover:text-white transition-colors" aria-label={`Edit ${u.username}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                      </button>
+                    )}
                     <button onClick={() => deleteUser(u.id)} className="text-slate-500 hover:text-record transition-colors">
                       <Trash2 size={14} />
                     </button>
@@ -671,7 +689,9 @@ const Admin = () => {
                 <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
                   <td className="p-6">
                     <div className="text-sm italic text-slate-300">"{c.text}"</div>
-                    <div className="text-[10px] text-slate-500 uppercase font-black mt-1">— {c.user.username}</div>
+                    <div className="mt-1 text-[10px] font-black uppercase text-slate-500">
+                      <AuthorIdentity author={c.user} />
+                    </div>
                   </td>
                   <td className="p-6 text-xs text-slate-400 uppercase font-semibold">{c.video.title}</td>
                   <td className="p-6 text-right">

@@ -16,7 +16,7 @@ Git 仓库只跟踪程序源码、数据库结构、部署脚本和测试。它*
 | --- | --- | --- |
 | `/vault/` | 归档首页 | 按管理员创建的栏目展示公开视频。视频卡片显示标题、缩略图、HLS/分辨率标记、赞数、观看数、时长和可选的 `New!` 角标。每个栏目可按上传时间、名称、时长、赞数或观看数排序。没有视频时显示 `The Archive is currently empty.`。没有匹配任何栏目的视频进入 **General Archive**。实现见 [Home.tsx](./frontend/src/pages/Home.tsx)。 |
 | `/vault/video/:id` | 视频详情 | HLS 播放器及 Auto/720p/1080p 清晰度选择、标题、观看数、标签、支持 GitHub Flavored Markdown 的描述、表情反应、赞/踩和评论。无描述时显示 `No session metadata provided.`；评论区标题为 **COMMENTS**。登录用户可互动，管理员可置顶或删除评论。实现见 [VideoView.tsx](./frontend/src/pages/VideoView.tsx) 和 [VideoPlayer.tsx](./frontend/src/components/VideoPlayer.tsx)。 |
-| `/vault/login` | 登录/注册 | 在 **Console Access** 和 **New Enrollment** 两种表单之间切换。用户名至少 3 个字符，密码至少 6 个字符；数据库中的第一个注册用户自动成为管理员。实现见 [Login.tsx](./frontend/src/pages/Login.tsx) 和 [auth.js](./src/routes/auth.js)。 |
+| `/vault/login` | 登录/注册 | 配置 Google OAuth 后支持 `@prismsus.org` 学校登录，三位指定用户自动获得管理员权限。允许本地登录时仍提供 **Console Access / New Enrollment**；本地用户名至少 3 个字符、密码至少 6 个字符，数据库中的第一个本地注册用户自动成为管理员。配置见 [Google SSO 说明](./GOOGLE_SSO_SETUP.zh-CN.md)，实现见 [Login.tsx](./frontend/src/pages/Login.tsx) 和 [auth.js](./src/routes/auth.js)。 |
 | `/vault/admin` | 管理台 | 标题为 **ADMIN CONSOLE / Master Control & Video Ingestion**。六个标签页是 **Queue Monitor、Videos、Categories、Users、Comments、Bug List**。上传区接收最高 5 GB 的 `.mp4`、`.mov` 或 `.mkv`；其他页用于公开视频/隐藏、编辑标题/描述/标签、标记 Featured/New、重试或永久删除，管理栏目和用户，清理评论，以及记录/关闭 bug。界面见 [Admin.tsx](./frontend/src/pages/Admin.tsx)，受保护的服务端操作见 [admin.js](./src/routes/admin.js)。 |
 
 `/vault/admin` 本身没有前端路由守卫，因此任何人都能打开页面外壳；不过所有 `/vault/api/admin/*` 请求都必须通过登录和管理员权限检查，非管理员不能取得或修改管理数据。
@@ -27,7 +27,7 @@ Git 仓库只跟踪程序源码、数据库结构、部署脚本和测试。它*
 
 | 模型 | 保存的内容 |
 | --- | --- |
-| `User` | 用户名、bcrypt 密码哈希、管理员标记、创建/更新时间，以及评论、表情、投票和其关闭的 bug。 |
+| `User` | 用户名、bcrypt 密码哈希、管理员标记、创建/更新时间，以及评论、表情、投票和其关闭的 bug。学校账号另存经过验证的邮箱、Google `sub` 和显示姓名；这些字段对旧本地账号为空。 |
 | `Video` | 标题、Markdown 描述、状态、HLS/缩略图/原片路径、Featured/New 标记、技术元数据、逗号分隔标签、观看数、时长、赞数和互动关系。 |
 | `Category` | 首页栏目名称、标签查询字符串和显示顺序。 |
 | `Vote` | 某用户对某视频的 `1`（赞）或 `-1`（踩）；同一用户和视频只保留一条。 |
@@ -42,7 +42,7 @@ Git 仓库只跟踪程序源码、数据库结构、部署脚本和测试。它*
 ## 4. 上传、转码与发布的真实链路
 
 ```text
-登录用户选择视频
+管理员选择视频
   → POST /vault/api/videos/upload
   → Multer 写入 temp/，Video 状态设为 PROCESSING
   → BullMQ 把任务写入 Redis 的 video-processing 队列
@@ -68,7 +68,7 @@ Git 仓库只跟踪程序源码、数据库结构、部署脚本和测试。它*
 
 当前系统没有定时发布或周期任务。每期节目都需要手动上传、补标签并控制公开状态。
 
-1. 第一次部署时，由负责老师或固定维护者先注册，确保这个首个账号获得管理员权限。之后在 **Users** 中管理其他成员的 Student/Admin 身份。
+1. 学校部署先按 [Google SSO 说明](./GOOGLE_SSO_SETUP.zh-CN.md) 配置 OAuth，由三位指定管理员之一使用学校 Google 账号登录。之后在 **Users** 中管理其他成员的 Student/Admin 身份。本地密码模式仅在允许时可用，其首个注册用户仍自动成为管理员。
 2. 在 **Admin → Categories** 新建栏目：`Section Name` 填 `Action News`，`Tag Filter` 填 `news`，`Display Order` 填期望的首页顺序。这个栏目通常只需创建一次。
 3. 在 **Admin → Queue Monitor** 选择本周成片，填写清晰的标题和描述后上传。描述支持 Markdown，但上传表单没有标签字段。
 4. 等待队列从 Waiting/Active 结束，并在 **Videos** 中确认视频状态变成 `PUBLIC`。上传成功只代表文件已进队；转码完成才代表可播放。
@@ -82,22 +82,24 @@ Git 仓库只跟踪程序源码、数据库结构、部署脚本和测试。它*
 
 ## 6. 认证、互动和管理规则
 
-- 首页视频列表、单个公开视频详情、栏目列表、缩略图和 HLS 文件都不要求登录；任何能访问服务器地址的人都能读取 `PUBLIC` 内容。静态媒体路由也不检查视频状态，因此知道具体媒体 URL 的人仍可直接请求已设为 `HIDDEN` 的 HLS/缩略图。登录只用于上传和互动，管理员权限用于后台管理。
-- 上传接口只检查“已登录”，没有检查管理员身份。正常界面把上传入口放在管理台，但任何已登录用户都可直接调用上传 API。
+- 首页视频列表、单个公开视频详情、栏目列表、缩略图和 HLS 文件都不要求登录；任何能访问服务器地址的人都能读取 `PUBLIC` 内容。静态媒体路由也不检查视频状态，因此知道具体媒体 URL 的人仍可直接请求已设为 `HIDDEN` 的 HLS/缩略图。互动需要登录，上传与后台管理需要管理员权限。
+- 上传接口在读取文件前检查登录及管理员身份，普通学校账号不能通过直接调用 API 上传视频。
 - 打开视频详情会立即把观看数加一，包括页面刷新；没有去重或播放时长门槛。
 - emoji 反应是切换操作；同一 emoji 再点一次会移除。选择器允许全部 emoji，不限于计划文档举例的四种。
 - 赞/踩按用户唯一。显示的 `likes` 是所有投票值相加后最小为 0 的结果。
 - 评论作者可删除自己的评论，管理员可删除或切换置顶。当前详情页仍按最新时间排序，置顶评论只改变外观，并不会真的排到最前面。
 - 弹幕在播放器下方的 **Danmaku / 弹幕** 区域操作：登录后可选 Scroll/Top/Bottom、颜色和 18/24/32px 字号，内容限制 80 字，每次发送间隔至少两秒。弹幕记录当前视频时间并保存到数据库，暂停、拖动、重播和倍速时跟随播放进度。播放区右上角的全屏按钮会同时放大视频和弹幕层。
 - **messages** 展开弹幕列表，点击时间可跳转，作者和管理员可删除；其他观众每十秒同步一次新增和删除。弹幕开关和透明度保存在当前浏览器。拥挤时会隐藏放不下的弹幕，所有记录仍保留在列表中。
-- 管理员可改用户名、重置密码、切换权限和删除其他用户；系统阻止管理员删除自己。
+- 学校账号的评论和弹幕列表显示 Google 姓名、学校邮箱和验证标记；旧本地账号显示用户名及 `Local` 标记。作者身份由服务器登录会话决定，不能由发送内容指定。
+- 管理员可切换权限和删除其他用户；本地账号还可改用户名、重置密码，Google 身份不能通过网站管理接口改写。系统阻止管理员删除自己。三位指定管理员每次 Google 登录会恢复管理员权限，撤销方式见 SSO 配置说明。
 
 ## 7. 关键源码地图
 
 | 位置 | 职责 |
 | --- | --- |
 | [src/index.js](./src/index.js) | Express 入口；挂载 API、媒体文件、生产前端和 `/vault` SPA 回退。 |
-| [src/routes/auth.js](./src/routes/auth.js) / [src/middleware/auth.js](./src/middleware/auth.js) | 注册、登录、登出、当前用户、JWT 校验和管理员授权。 |
+| [src/routes/auth.js](./src/routes/auth.js) / [src/middleware/auth.js](./src/middleware/auth.js) | 登录方式配置、Google 回跳、本地注册/登录、登出、当前用户、JWT 校验和管理员授权。 |
+| [src/auth/googleOAuth.js](./src/auth/googleOAuth.js) / [userDto.js](./src/auth/userDto.js) | Google OIDC、state/nonce/PKCE、签名及学校域验证、指定管理员授权、安全作者信息。 |
 | [src/routes/videos.js](./src/routes/videos.js) | 上传、公开视频列表和视频详情/观看计数。 |
 | [src/routes/admin.js](./src/routes/admin.js) | 视频、队列、用户、栏目、全站评论和 bug 的管理员 API。 |
 | [src/routes/comments.js](./src/routes/comments.js) / [reactions.js](./src/routes/reactions.js) / [votes.js](./src/routes/votes.js) | 三类互动 API。 |

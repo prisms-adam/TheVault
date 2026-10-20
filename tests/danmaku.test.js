@@ -108,7 +108,7 @@ describe('Danmaku API', () => {
       earlyDanmaku.id,
       lateDanmaku.id,
     ]);
-    expect(response.body[0].user).toEqual({ username: owner.username });
+    expect(response.body[0].user).toEqual({ username: owner.username, displayName: null, email: null, isSchoolAccount: false });
     expect(response.body[0].user.password).toBeUndefined();
   });
 

@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronUp, Eye, EyeOff, Send, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../lib/api';
+import AuthorIdentity from './AuthorIdentity';
+import { getUserDisplayName } from '../lib/user';
 import {
   formatDanmakuTime,
   mergeDanmaku,
@@ -381,14 +383,25 @@ export default function Danmaku({ videoId, user, videoRef, overlayWidth, overlay
             {items.length === 0 ? (
               <p className="py-4 text-center text-xs text-slate-500">No danmaku yet.</p>
             ) : items.map((item) => (
-              <div key={item.id} className="flex items-center gap-2 border-b border-white/5 py-2 text-xs last:border-0">
+              <div key={item.id} className="flex flex-wrap items-center gap-2 border-b border-white/5 py-2 text-xs last:border-0">
                 <button type="button" onClick={() => seekTo(item.time)} className="shrink-0 font-mono text-record hover:text-white" aria-label={`Seek to ${formatDanmakuTime(item.time)}`}>
                   {formatDanmakuTime(item.time)}
                 </button>
                 <span className="min-w-0 flex-1 truncate text-slate-200">{item.text}</span>
-                <span className="hidden shrink-0 text-slate-500 sm:inline">{item.user.username}</span>
+                <AuthorIdentity
+                  author={item.user}
+                  compact={!item.user.isSchoolAccount}
+                  className={item.user.isSchoolAccount
+                    ? 'order-4 ml-12 basis-full justify-start text-left text-slate-500 sm:order-none sm:ml-0 sm:basis-auto sm:max-w-[40%] sm:justify-end sm:text-right'
+                    : 'max-w-32 shrink-0 text-slate-500'}
+                />
                 {(user?.isAdmin || user?.id === item.userId) && (
-                  <button type="button" onClick={() => void deleteDanmaku(item)} className="shrink-0 text-slate-500 hover:text-record" aria-label={`Delete danmaku from ${item.user.username}`}>
+                  <button
+                    type="button"
+                    onClick={() => void deleteDanmaku(item)}
+                    className={`${item.user.isSchoolAccount ? 'order-3 sm:order-none' : ''} shrink-0 text-slate-500 hover:text-record`}
+                    aria-label={`Delete danmaku from ${getUserDisplayName(item.user)}`}
+                  >
                     <Trash2 size={13} />
                   </button>
                 )}

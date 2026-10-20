@@ -3,6 +3,12 @@ const router = express.Router();
 const prisma = require('../db');
 const { authenticate, authorizeAdmin } = require('../middleware/auth');
 const { videoQueue } = require('../queues');
+const {
+  authenticatedUserSelect,
+  publicAuthorSelect,
+  toAuthenticatedUser,
+  toPublicAuthor,
+} = require('../auth/userDto');
 
 router.use(authenticate, authorizeAdmin);
 
@@ -106,9 +112,12 @@ router.get('/queue', async (req, res) => {
 router.get('/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, username: true, isAdmin: true, createdAt: true }
+      select: { ...authenticatedUserSelect, createdAt: true }
     });
-    res.json(users);
+    res.json(users.map((user) => ({
+      ...toAuthenticatedUser(user),
+      createdAt: user.createdAt,
+    })));
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -118,13 +127,24 @@ const bcrypt = require('bcryptjs');
 
 // PATCH /api/admin/users/:id - Update user (isAdmin, username)
 router.patch('/users/:id', async (req, res) => {
-  const { isAdmin, username } = req.body;
+  const body = req.body || {};
+  const { isAdmin, username } = body;
   try {
+    const forbiddenIdentityFields = ['email', 'googleSub', 'displayName', 'password'];
+    if (forbiddenIdentityFields.some((field) => Object.hasOwn(body, field))) {
+      return res.status(400).json({ error: 'Google identity fields cannot be edited' });
+    }
+    const existing = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: 'User not found' });
+    if (existing.googleSub && Object.hasOwn(body, 'username')) {
+      return res.status(400).json({ error: 'Google account identity cannot be edited' });
+    }
     const user = await prisma.user.update({
       where: { id: req.params.id },
-      data: { isAdmin, username }
+      data: { isAdmin, username },
+      select: authenticatedUserSelect,
     });
-    res.json(user);
+    res.json(toAuthenticatedUser(user));
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -133,10 +153,15 @@ router.patch('/users/:id', async (req, res) => {
 // PATCH /api/admin/users/:id/password - Reset password
 router.patch('/users/:id/password', async (req, res) => {
   const { password } = req.body;
-  if (!password || password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
-  }
   try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.googleSub) {
+      return res.status(400).json({ error: 'Google account passwords cannot be reset locally' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.user.update({
       where: { id: req.params.id },
@@ -175,12 +200,15 @@ router.get('/comments', async (req, res) => {
   try {
     const comments = await prisma.comment.findMany({
       include: {
-        user: { select: { username: true } },
+        user: { select: publicAuthorSelect },
         video: { select: { title: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
-    res.json(comments);
+    res.json(comments.map((comment) => ({
+      ...comment,
+      user: toPublicAuthor(comment.user),
+    })));
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -224,13 +252,16 @@ router.get('/bugs', async (req, res) => {
     }
     const bugs = await prisma.bugReport.findMany({
       where: query,
-      include: { fixedByUser: { select: { username: true } } },
+      include: { fixedByUser: { select: publicAuthorSelect } },
       orderBy: [
         { status: 'asc' }, // OPEN first
         { createdAt: 'desc' }
       ]
     });
-    res.json(bugs);
+    res.json(bugs.map((bug) => ({
+      ...bug,
+      fixedByUser: bug.fixedByUser ? toPublicAuthor(bug.fixedByUser) : null,
+    })));
   } catch (error) {
     console.error('Get bugs error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -245,8 +276,9 @@ router.post('/bugs', async (req, res) => {
   try {
     const bug = await prisma.bugReport.create({
       data: { title: title.trim(), description: description?.trim() || null },
-      include: { fixedByUser: { select: { username: true } } }
+      include: { fixedByUser: { select: publicAuthorSelect } }
     });
+    if (bug.fixedByUser) bug.fixedByUser = toPublicAuthor(bug.fixedByUser);
     res.status(201).json(bug);
   } catch (error) {
     console.error('Create bug error:', error);
@@ -279,8 +311,9 @@ router.patch('/bugs/:id', async (req, res) => {
     const bug = await prisma.bugReport.update({
       where: { id: req.params.id },
       data: updateData,
-      include: { fixedByUser: { select: { username: true } } }
+      include: { fixedByUser: { select: publicAuthorSelect } }
     });
+    if (bug.fixedByUser) bug.fixedByUser = toPublicAuthor(bug.fixedByUser);
     res.json(bug);
   } catch (error) {
     console.error('Update bug error:', error);

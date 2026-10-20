@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../db');
 const { authenticate, authorizeAdmin } = require('../middleware/auth');
+const { publicAuthorSelect, toPublicAuthor } = require('../auth/userDto');
 
 // POST /api/comments/:videoId
 router.post('/:videoId', authenticate, async (req, res) => {
@@ -12,8 +13,9 @@ router.post('/:videoId', authenticate, async (req, res) => {
   try {
     const comment = await prisma.comment.create({
       data: { text, userId, videoId },
-      include: { user: { select: { username: true } } }
+      include: { user: { select: publicAuthorSelect } }
     });
+    comment.user = toPublicAuthor(comment.user);
     res.status(201).json(comment);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });

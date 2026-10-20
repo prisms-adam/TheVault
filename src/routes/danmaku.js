@@ -2,6 +2,7 @@ const express = require('express');
 const { randomUUID } = require('crypto');
 const prisma = require('../db');
 const { authenticate } = require('../middleware/auth');
+const { publicAuthorSelect, toPublicAuthor } = require('../auth/userDto');
 
 const router = express.Router();
 const MODES = new Set(['scroll', 'top', 'bottom']);
@@ -9,7 +10,11 @@ const SIZES = new Set([18, 24, 32]);
 const COLOR_PATTERN = /^#[0-9A-F]{6}$/i;
 const COOLDOWN_MS = 2000;
 
-const userSelection = { username: true };
+const userSelection = publicAuthorSelect;
+
+function withPublicAuthor(danmaku) {
+  return { ...danmaku, user: toPublicAuthor(danmaku.user) };
+}
 
 function validateDanmaku(body, duration) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -82,7 +87,7 @@ router.get('/:videoId', async (req, res) => {
       include: { user: { select: userSelection } },
     });
 
-    res.json(danmakus);
+    res.json(danmakus.map(withPublicAuthor));
   } catch (error) {
     console.error('Danmaku read error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -125,7 +130,7 @@ router.post('/:videoId', authenticate, async (req, res) => {
       include: { user: { select: userSelection } },
     });
 
-    res.status(201).json(danmaku);
+    res.status(201).json(withPublicAuthor(danmaku));
   } catch (error) {
     console.error('Danmaku create error:', error);
     res.status(500).json({ error: 'Internal server error' });

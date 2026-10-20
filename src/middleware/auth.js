@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../db');
+const { authenticatedUserSelect, toAuthenticatedUser } = require('../auth/userDto');
+const { getAuthConfig } = require('../auth/googleOAuth');
 
 const authenticate = async (req, res, next) => {
   const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
@@ -12,14 +14,26 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, username: true, isAdmin: true },
+      select: authenticatedUserSelect,
     });
 
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized: User not found' });
     }
 
-    req.user = user;
+    const authenticatedUser = toAuthenticatedUser(user);
+    const authConfig = getAuthConfig();
+    if (!authConfig.localAuthEnabled && !authenticatedUser.isSchoolAccount) {
+      res.clearCookie('token', {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production' || Boolean(authConfig.redirectUri?.startsWith('https://')),
+        path: '/',
+      });
+      return res.status(401).json({ error: 'Unauthorized: School Google sign-in required' });
+    }
+
+    req.user = authenticatedUser;
     next();
   } catch (error) {
     return res.status(401).json({ error: 'Unauthorized: Invalid token' });

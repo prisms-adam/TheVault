@@ -4,6 +4,8 @@ The Vault is a high-performance, LAN-exclusive video repository designed to look
 
 Windows local setup: [LOCAL_SETUP.md](LOCAL_SETUP.md). Chinese source and workflow guide: [PROJECT_GUIDE.zh-CN.md](PROJECT_GUIDE.zh-CN.md).
 
+School Google login: [Google SSO setup](GOOGLE_SSO_SETUP.zh-CN.md). Configure a Google Web OAuth client to allow verified `@prismsus.org` accounts; comments and danmaku show the author's school identity.
+
 ---
 
 ## Core Features
@@ -20,7 +22,7 @@ Windows local setup: [LOCAL_SETUP.md](LOCAL_SETUP.md). Chinese source and workfl
 - **HLS Pipeline:** Background video transcoding using FFmpeg and BullMQ.
 - **Metadata Extraction:** Automatically captures duration, bitrate, codecs, and resolution.
 - **Dynamic Storage:** Admin-configurable upload and storage directories.
-- **First-User Admin:** The first person to register automatically gains Master Admin privileges.
+- **School Google SSO:** Verified `@prismsus.org` accounts can sign in with Google. The three designated school accounts receive administrator access; other school users can comment and send danmaku. Legacy local registration, when enabled, retains the first-user administrator rule.
 
 ### Admin Console (Moderation)
 - **Global Kill-Switch:** Instantly hide any video from the archive.
@@ -28,7 +30,7 @@ Windows local setup: [LOCAL_SETUP.md](LOCAL_SETUP.md). Chinese source and workfl
 - **Category Management:** Define homepage sections based on tag queries.
 - **Tagging:** Manage video tags for categorization.
 - **Comment Scrubbing:** Full moderation list with Delete and Pin capabilities.
-- **User Management:** Manage users, rename accounts, reset passwords, and toggle Admin permissions.
+- **User Management:** Manage users and toggle Admin permissions. Local accounts support username/password changes; Google identity is managed by Google.
 
 ---
 

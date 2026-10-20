@@ -6,9 +6,11 @@ import VideoView from './pages/VideoView';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import api from './lib/api';
+import AuthorIdentity from './components/AuthorIdentity';
+import type { UserIdentity } from './lib/user';
 
 const Navbar = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserIdentity | null>(null);
 
   useEffect(() => {
     api.get('/auth/me')
@@ -24,25 +26,25 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="glass sticky top-0 z-50 px-6 py-4 flex items-center justify-between border-b border-white/5">
-      <Link to="/" className="flex items-center gap-3 text-2xl font-black tracking-tighter uppercase italic group">
+    <nav className="glass sticky top-0 z-50 flex items-center justify-between border-b border-white/5 px-3 py-4 sm:px-6">
+      <Link to="/" className="group flex shrink-0 items-center gap-2 text-lg font-black uppercase italic tracking-tighter sm:gap-3 sm:text-2xl">
         <div className="w-4 h-4 rounded-full bg-record animate-pulse shadow-[0_0_15px_rgba(190,18,60,0.8)]" />
-        <span className="group-hover:text-record transition-colors">THE AVC VAULT</span>
+        <span className="transition-colors group-hover:text-record"><span className="hidden sm:inline">THE AVC </span>VAULT</span>
       </Link>
       
-      <div className="flex items-center gap-8 text-[10px] font-black uppercase tracking-widest">
-        <Link to="/" className="hover:text-record transition-colors">Archive</Link>
+      <div className="flex min-w-0 items-center gap-3 text-[10px] font-black uppercase tracking-widest sm:gap-8">
+        <Link to="/" className="hidden transition-colors hover:text-record sm:block">Archive</Link>
         
         {user ? (
-          <div className="flex items-center gap-6">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-6">
             {user.isAdmin && (
-              <Link to="/admin" className="px-3 py-2 glass rounded-lg hover:bg-record transition-all group flex items-center gap-2">
+              <Link to="/admin" className="glass group flex items-center gap-2 rounded-lg p-2 transition-all hover:bg-record sm:px-3">
                 <Database size={16} className="group-hover:text-white" />
-                <span className="group-hover:text-white">Admin</span>
+                <span className="hidden group-hover:text-white sm:inline">Admin</span>
               </Link>
             )}
-            <div className="flex items-center gap-3 pl-4 border-l border-white/10">
-              <span className="text-slate-400 italic">{user.username}</span>
+            <div className="flex min-w-0 items-center gap-2 border-l border-white/10 pl-2 sm:gap-3 sm:pl-4">
+              <AuthorIdentity author={user} compact className="max-w-24 text-slate-400 italic sm:max-w-48" />
               <button onClick={logout} className="p-2 glass rounded-lg hover:text-record transition-all">
                 <LogOut size={16} />
               </button>
